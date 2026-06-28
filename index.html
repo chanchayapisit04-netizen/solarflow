@@ -119,6 +119,16 @@ tailwind.config = {
   .lgn-btn:active{transform:scale(.98)}
   .lgn-btn:disabled{opacity:.7;cursor:default}
   .lgn-foot{color:rgba(255,255,255,.38);font-size:11px;margin-top:18px}
+
+  .lgn-pw-link{display:block;width:100%;text-align:center;background:none;border:none;color:rgba(255,255,255,.45);font-size:12.5px;margin-top:14px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.25)}
+  .lgn-pw-link:hover{color:rgba(255,255,255,.7)}
+  .lgn-pw-form{margin-top:6px}
+  .lgn-pw-input{width:100%;padding:12px 14px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:14px;margin-bottom:10px;font-family:inherit}
+  .lgn-pw-input::placeholder{color:rgba(255,255,255,.4)}
+  .lgn-pw-input:focus{border-color:rgba(245,158,11,.6);box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+  .lgn-btn-dark{background:linear-gradient(120deg,#fbbf24,#d97706);color:#1a1410}
+  .lgn-pw-back{display:block;width:100%;text-align:center;background:none;border:none;color:rgba(255,255,255,.4);font-size:12px;margin-top:12px;cursor:pointer}
+  .lgn-pw-back:hover{color:rgba(255,255,255,.65)}
   .lgn-close{position:absolute;top:14px;right:14px;z-index:6;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:rgba(255,255,255,.65);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .lgn-close:hover{background:rgba(255,255,255,.14);color:#fff}
 
@@ -343,6 +353,10 @@ tailwind.config = {
   .trust-badge{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px 16px;backdrop-filter:blur(6px);transition:transform .25s cubic-bezier(.2,.8,.3,1),border-color .25s,background .25s}
   .trust-badge:hover{transform:translateY(-5px);border-color:rgba(245,158,11,.45);background:rgba(255,255,255,.07)}
   .trust-badge-icon{font-size:27px;margin-bottom:6px}
+
+  .strength-card{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:26px 22px;backdrop-filter:blur(6px);transition:transform .25s cubic-bezier(.2,.8,.3,1),border-color .25s,background .25s}
+  .strength-card:hover{transform:translateY(-5px);border-color:rgba(245,158,11,.45);background:rgba(255,255,255,.07)}
+  .strength-icon{font-size:34px}
 
   .trust-twinkle{position:absolute;border-radius:50%;background:#fde68a;animation:bgTwinkle ease-in-out infinite}
   @keyframes bgTwinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:.85;transform:scale(1)}}
@@ -950,6 +964,13 @@ tailwind.config = {
         <svg width="19" height="19" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8.1 3l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.1 8.1 3l5.7-5.7C34.6 7.1 29.6 5 24 5c-7.6 0-14.1 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-2 14-5.4l-6.5-5.5C29.4 35.6 26.8 37 24 37c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 40.9 16.2 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.4-2.3 4.4-4.3 5.9l6.5 5.5C41.5 36.5 45 30.8 45 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
         เข้าสู่ระบบด้วย Google
       </button>
+      <button id="pwLoginToggle" onclick="togglePasswordLogin()" class="lgn-pw-link">เข้าสู่ระบบด้วยรหัสผ่านแทน (สำหรับแอดมิน)</button>
+      <div id="pwLoginForm" class="hidden lgn-pw-form">
+        <input type="email" id="pwLoginEmail" placeholder="อีเมลแอดมิน" class="lgn-pw-input" autocomplete="username">
+        <input type="password" id="pwLoginPassword" placeholder="รหัสผ่าน" class="lgn-pw-input" autocomplete="current-password">
+        <button class="lgn-btn lgn-btn-dark" id="pwLoginSubmitBtn" onclick="doPasswordLogin()">เข้าสู่ระบบด้วยรหัสผ่าน</button>
+        <button onclick="togglePasswordLogin()" class="lgn-pw-back">← กลับไปใช้ Google</button>
+      </div>
       <p class="lgn-foot">🔒 ปลอดภัย · ข้อมูลของคุณถูกเก็บเป็นความลับ</p>
     </div>
   </div>
@@ -977,6 +998,17 @@ tailwind.config = {
       <button onclick="closeOv('ovNewJob')" class="text-white/80 hover:text-white text-xl leading-none">✕</button>
     </div>
     <div class="sheet-b" id="newJobBody"></div>
+  </div>
+</div>
+
+<!-- ===================== EDIT JOB MODAL ===================== -->
+<div class="ov" id="ovEditJob">
+  <div class="sheet" data-modal style="max-width:480px">
+    <div class="sheet-h">
+      <div class="font-bold text-lg">✏️ แก้ไขข้อมูลงาน</div>
+      <button onclick="closeOv('ovEditJob')" class="text-white/80 hover:text-white text-xl leading-none">✕</button>
+    </div>
+    <div class="sheet-b" id="editJobBody"></div>
   </div>
 </div>
 
@@ -1226,6 +1258,11 @@ const db = {
     if(error){ console.error(error); toast("อัปเดตไม่สำเร็จ: "+error.message,"err"); return null; }
     return data;
   },
+  async deleteJob(id){
+    const { error } = await sb.from("jobs").delete().eq("id", id);
+    if(error){ console.error(error); toast("ลบงานไม่สำเร็จ: "+error.message,"err"); return false; }
+    return true;
+  },
   async listPhotos(jobId){
     const { data, error } = await sb.from("job_photos").select("*").eq("job_id", jobId).order("created_at",{ascending:false});
     if(error){ console.error(error); return []; }
@@ -1401,6 +1438,24 @@ async function doLogin(){
   try{
     await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin + window.location.pathname } });
   }catch(e){ console.error(e); toast("เข้าสู่ระบบไม่สำเร็จ","err"); btn.disabled = false; }
+}
+function togglePasswordLogin(){
+  const showingPw = document.getElementById("pwLoginForm").classList.contains("hidden");
+  document.getElementById("googleLoginBtn").classList.toggle("hidden", showingPw);
+  document.getElementById("pwLoginToggle").classList.toggle("hidden", showingPw);
+  document.getElementById("pwLoginForm").classList.toggle("hidden", !showingPw);
+}
+async function doPasswordLogin(){
+  const email = document.getElementById("pwLoginEmail").value.trim().toLowerCase();
+  const password = document.getElementById("pwLoginPassword").value;
+  if(!email || !password){ toast("กรอกอีเมลและรหัสผ่านให้ครบ","err"); return; }
+  if(!sb){ toast("ระบบยังไม่พร้อม ลองใหม่อีกครั้ง","err"); return; }
+  const btn = document.getElementById("pwLoginSubmitBtn");
+  btn.disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  if(error){ toast("เข้าสู่ระบบไม่สำเร็จ: อีเมลหรือรหัสผ่านไม่ถูกต้อง","err"); return; }
+  // onAuthStateChange listener (ผูกไว้ตั้งแต่ตอนสร้าง client) จะจัดการเปิดแดชบอร์ดให้เองอัตโนมัติ
 }
 async function doLogout(){
   closeOv("ovProfile");
@@ -1875,7 +1930,11 @@ function renderJobDetail(job, photos, slips, comments, claims){
   claims = claims || [];
 
   const infoBlock = `
-    <div class="grid grid-cols-2 gap-3 text-sm mb-3">
+    <div class="flex items-center justify-between mb-1">
+      <div class="text-xs font-semibold text-ink-400 uppercase tracking-wide">ข้อมูลลูกค้า</div>
+      ${isAdmin ? `<button onclick="openEditJob('${job.id}')" class="text-xs text-brand-600 font-semibold">✏️ แก้ไขข้อมูล</button>` : ""}
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-sm mb-3 mt-2">
       <div><div class="text-ink-400 text-xs">ลูกค้า</div><div class="font-medium">${esc(job.customer_name||'—')}</div></div>
       <div><div class="text-ink-400 text-xs">เบอร์โทร</div><div class="font-medium">${esc(job.customer_phone||'—')}</div></div>
       <div><div class="text-ink-400 text-xs">จังหวัด</div><div class="font-medium">${esc(job.province||'—')}</div></div>
@@ -1938,7 +1997,7 @@ function renderJobDetail(job, photos, slips, comments, claims){
         <button onclick="saveWarranty()" class="pbtn pbtn-primary !text-xs !py-2 col-span-2 mt-1">บันทึกการรับประกัน</button>
         <label class="col-span-2 flex items-center gap-2.5 bg-amber-50 rounded-lg px-3 py-2.5 mt-1 cursor-pointer">
           <input type="checkbox" id="publicShowcaseToggle" ${job.is_public_showcase?'checked':''} onchange="togglePublicShowcase(this.checked)" class="w-4 h-4 accent-amber-600">
-          <span class="text-xs text-amber-800">🌟 แสดงงานนี้ในหน้า "ใบรับประกัน" สาธารณะ (ชื่อลูกค้าจะปกปิดนามสกุล เช่น "อภิสิทธิ์ จ.") — เปิดเฉพาะงานที่มั่นใจว่าลูกค้ายินยอม</span>
+          <span class="text-xs text-amber-800">🌟 แสดงงานนี้ในหน้า "ใบรับประกัน" สาธารณะ (ชื่อลูกค้าจะปกปิดนามสกุล เช่น "สมชาย จ.") — เปิดเฉพาะงานที่มั่นใจว่าลูกค้ายินยอม</span>
         </label>
       </div>`}
     </div>` : "";
@@ -2033,7 +2092,12 @@ function renderJobDetail(job, photos, slips, comments, claims){
       </div>
     </div>`;
 
-  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + confirmBlock + appointmentDisplay + adminStatusBlock + warrantyDisplay + claimsBlock + photosBlock + slipsBlock + commentsBlock;
+  const dangerZoneBlock = isAdmin ? `
+    <div class="mt-6 pt-5 border-t border-dashed border-rose-200">
+      <button onclick="deleteJobConfirm('${job.id}')" class="pbtn pbtn-danger w-full !py-2.5 !text-xs">🗑️ ลบงานนี้ออกจากระบบ (ลบถาวร ไม่สามารถกู้คืนได้)</button>
+    </div>` : "";
+
+  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + confirmBlock + appointmentDisplay + adminStatusBlock + warrantyDisplay + claimsBlock + photosBlock + slipsBlock + commentsBlock + dangerZoneBlock;
 }
 
 async function refreshJobDetail(){
@@ -2045,6 +2109,53 @@ async function saveJobPrice(){
   const val = Number(document.getElementById("editPriceInput").value)||0;
   const updated = await db.updateJob(activeJob.id, { total_price: val });
   if(updated){ activeJob = updated; syncJobInCache(updated); toast("บันทึกราคาแล้ว","ok"); renderAdminJobsList(); }
+}
+
+/* ===================== แก้ไขข้อมูลงาน (Edit Job) ===================== */
+let editJobId = null;
+function openEditJob(jobId){
+  const job = (isAdmin?adminJobsCache:custJobsCache).find(j=>j.id===jobId) || activeJob;
+  if(!job) return;
+  editJobId = jobId;
+  document.getElementById("editJobBody").innerHTML = `
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div><label class="text-xs text-ink-500 font-medium">ชื่อ-นามสกุล</label><input id="ejName" value="${esc(job.customer_name||'')}" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1"></div>
+      <div><label class="text-xs text-ink-500 font-medium">เบอร์โทร</label><input id="ejPhone" value="${esc(job.customer_phone||'')}" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1"></div>
+      <div><label class="text-xs text-ink-500 font-medium">อีเมล</label><input id="ejEmail" value="${esc(job.customer_email||'')}" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1"></div>
+      <div><label class="text-xs text-ink-500 font-medium">จังหวัด</label>
+        <select id="ejProvince" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1 bg-white">${PROVINCES.map(p=>`<option ${p===job.province?'selected':''}>${p}</option>`).join("")}</select>
+      </div>
+      <div><label class="text-xs text-ink-500 font-medium">ขนาดระบบ</label><input id="ejSize" value="${esc(job.system_size||'')}" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1"></div>
+    </div>
+    <label class="text-xs text-ink-500 font-medium">ที่อยู่ติดตั้ง</label>
+    <input id="ejAddress" value="${esc(job.address||'')}" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1 mb-4">
+    <label class="text-xs text-ink-500 font-medium">หมายเหตุ</label>
+    <textarea id="ejNote" rows="3" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1 mb-4">${esc(job.note||'')}</textarea>
+    <button onclick="submitEditJob()" class="pbtn pbtn-primary w-full !py-3">บันทึกการเปลี่ยนแปลง</button>
+  `;
+  openOv("ovEditJob");
+}
+async function submitEditJob(){
+  const name = document.getElementById("ejName").value.trim();
+  const phone = document.getElementById("ejPhone").value.trim();
+  const email = document.getElementById("ejEmail").value.trim().toLowerCase();
+  if(!name || !phone || !email.includes("@")){ toast("กรอกชื่อ เบอร์โทร และอีเมลให้ถูกต้อง","err"); return; }
+  const patch = {
+    customer_name: name, customer_phone: phone, customer_email: email,
+    province: document.getElementById("ejProvince").value,
+    address: document.getElementById("ejAddress").value.trim(),
+    system_size: document.getElementById("ejSize").value.trim(),
+    note: document.getElementById("ejNote").value.trim()
+  };
+  const updated = await db.updateJob(editJobId, patch);
+  if(updated){
+    syncJobInCache(updated);
+    if(activeJob && activeJob.id===editJobId) activeJob = updated;
+    closeOv("ovEditJob");
+    toast("บันทึกข้อมูลงานแล้ว","ok");
+    if(isAdmin){ loadAdminJobs(); } else { loadCustomerJobs(); }
+    if(activeJob && activeJob.id===editJobId) await refreshJobDetail();
+  }
 }
 async function changeJobStatus(){
   const val = document.getElementById("statusSelect").value;
@@ -2110,6 +2221,14 @@ async function uploadJobPhotos(e){
 async function removeJobPhoto(id, url){
   if(!confirm("ลบรูปนี้?")) return;
   if(await db.deletePhoto(id, url)){ toast("ลบรูปแล้ว","ok"); await refreshJobDetail(); }
+}
+async function deleteJobConfirm(jobId){
+  if(!confirm("ยืนยันลบงานนี้ออกจากระบบ?\n\nข้อมูลทั้งหมดของงานนี้ (รูปภาพ สลิป เคสเคลม คอมเมนต์) จะถูกลบไปด้วย และไม่สามารถกู้คืนได้")) return;
+  if(await db.deleteJob(jobId)){
+    closeOv("ovJob");
+    toast("ลบงานออกจากระบบแล้ว","ok");
+    loadAdminJobs();
+  }
 }
 async function togglePublicPhoto(id, val){
   if(await db.togglePhotoPublic(id, val)){ await refreshJobDetail(); renderPortfolio(); }
