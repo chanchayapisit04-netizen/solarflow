@@ -727,6 +727,16 @@ let currentUser = null;   // {id,email,name,avatar}
 let isAdmin = false;
 let currentView = "public";
 
+/* ผูก listener ทันทีตอนสร้าง client — สำคัญมาก ต้องทำก่อนงานอื่นใดทั้งหมด
+   เพื่อไม่ให้พลาดอีเวนต์ SIGNED_IN ที่เกิดจากการแลก OAuth code อัตโนมัติของไลบรารี
+   (ถ้าผูกช้าไปแม้แค่เสี้ยววินาที อาจดักจับการล็อกอินที่เพิ่งเด้งกลับมาไม่ทัน) */
+if(sb){
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event === "SIGNED_IN" && session){ onAuthed(session.user); }
+    if(event === "SIGNED_OUT"){ currentUser=null; isAdmin=false; setView("public"); renderAuthSlot(); }
+  });
+}
+
 /* ===================== STATIC DATA ===================== */
 const SERVICES = [
   { key:"find_contractor", label:"จัดหาผู้รับเหมาโซลาร์เซลล์", price:1000, fixed:true, icon:"🤝", desc:"แนะนำและจัดหาผู้รับเหมาที่เหมาะกับงานของคุณ" },
@@ -757,6 +767,18 @@ const pid = () => "p" + Date.now().toString(36) + Math.random().toString(36).sli
 const todayISO = () => new Date().toISOString().slice(0,10);
 function thDate(iso){ if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function warrantyInfo(startISO, years){
+  if(!startISO || !years) return null;
+  const start = new Date(startISO+"T00:00:00");
+  const end = new Date(start); end.setFullYear(end.getFullYear()+Number(years));
+  const now = new Date();
+  const totalMs = end-start, usedMs = Math.min(Math.max(now-start,0), totalMs);
+  const pct = totalMs>0 ? Math.round((usedMs/totalMs)*100) : 100;
+  const remMs = Math.max(end-now,0);
+  const remYears = remMs/(365.25*24*3600*1000);
+  const expired = now > end;
+  return { startISO, endISO: end.toISOString().slice(0,10), pct, remYears, expired };
+}
 
 function toast(msg, type){
   const wrap = document.getElementById("toastWrap");
@@ -872,6 +894,20 @@ const db = {
 };
 
 /* ===================== AUTH ===================== */
+async function onAuthed(u){
+  if(currentUser && currentUser.id === u.id) return; // กันเรียกซ้ำถ้า listener กับ getSession ตรวจพบ session พร้อมกันทั้งคู่
+  currentUser = {
+    id: u.id,
+    email: u.email,
+    name: (u.user_metadata && (u.user_metadata.full_name||u.user_metadata.name)) || u.email,
+    avatar: u.user_metadata && u.user_metadata.avatar_url
+  };
+  isAdmin = ADMIN_EMAILS.includes(currentUser.email);
+  closeOv("ovLogin");
+  renderAuthSlot();
+  setView(isAdmin ? "admin" : "customer");
+  maybeShowOnboarding();
+}
 async function doLogin(){
   if(!sb){ toast("ระบบยังไม่พร้อม ลองใหม่อีกครั้ง","err"); return; }
   const btn = document.getElementById("googleLoginBtn");
@@ -892,10 +928,6 @@ async function initAuth(){
   if(!sb) return;
   const { data } = await sb.auth.getSession();
   if(data && data.session) await onAuthed(data.session.user);
-  sb.auth.onAuthStateChange((event, session)=>{
-    if(event === "SIGNED_IN" && session){ onAuthed(session.user); }
-    if(event === "SIGNED_OUT"){ currentUser=null; isAdmin=false; setView("public"); renderAuthSlot(); }
-  });
 }
 /* ===================== VIEW ROUTING ===================== */
 function setView(v){
