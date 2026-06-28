@@ -832,12 +832,20 @@ tailwind.config = {
       <button onclick="openNewJobForm()" class="pbtn pbtn-primary !px-5 !py-3">+ ส่งคำขอบริการใหม่</button>
     </div>
   </div>
-  <div class="max-w-5xl mx-auto px-5 sm:px-8 py-10">
+
+  <div class="max-w-5xl mx-auto px-5 sm:px-8 pt-6">
     <div id="custClaimAlertBanner" class="hidden cust-claim-alert-banner">
       <span class="claim-alert-pulse">🛡️</span>
       <span class="flex-1" id="custClaimAlertText">เคสเคลมของคุณมีความคืบหน้าใหม่</span>
       <button onclick="dismissCustClaimAlert()" class="confirm-alert-dismiss" style="background:#e11d48">ดูเลย →</button>
     </div>
+    <div class="flex items-center gap-2 border-b border-ink-100 mb-6">
+      <button id="custTabJobsBtn" onclick="switchCustomerSection('jobs')" class="admin-tab admin-tab-on">📋 งานของฉัน</button>
+      <button id="custTabClaimsBtn" onclick="switchCustomerSection('claims')" class="admin-tab">🛡️ เคสเคลมของฉัน <span id="custClaimsBadge" class="hidden">0</span></button>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-5 sm:px-8 py-2 pb-10" id="custJobsArea">
     <div id="custJobsList" class="space-y-5"></div>
     <div id="custJobsEmpty" class="hidden text-center py-16">
       <div class="text-5xl mb-3">☀️</div>
@@ -846,6 +854,15 @@ tailwind.config = {
     </div>
     <div id="custJobsLoading" class="space-y-3">
       <div class="ld h-28 rounded-2xl"></div><div class="ld h-28 rounded-2xl"></div>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-5 sm:px-8 py-2 pb-10 hidden" id="custClaimsArea">
+    <div class="flex items-center gap-2 mb-5 overflow-x-auto pb-1" id="custClaimFilterBar"></div>
+    <div id="custClaimsList" class="space-y-3"></div>
+    <div id="custClaimsEmpty" class="hidden text-center py-16">
+      <div class="text-5xl mb-3">🛡️</div>
+      <div class="text-ink-500 font-medium">คุณยังไม่มีเคสเคลมในระบบ</div>
     </div>
   </div>
 </div>
@@ -2149,9 +2166,13 @@ async function submitNewJob(adminMode){
 let claimPendingPhotos = [];
 let activeClaimJobId = null;
 let myClaimsCache = [];
+let custClaimFilter = "all";
+let custSection = "jobs";
 async function checkCustomerClaimUpdates(){
   if(isAdmin || !currentUser) return;
   myClaimsCache = await db.listMyClaims();
+  const badge = document.getElementById("custClaimsBadge");
+  if(badge){ badge.textContent = myClaimsCache.length; badge.classList.toggle("hidden", myClaimsCache.length===0); }
   const banner = document.getElementById("custClaimAlertBanner");
   if(!banner || !myClaimsCache.length) return;
   let seen = {};
@@ -2174,6 +2195,41 @@ function dismissCustClaimAlert(){
   try{ localStorage.setItem("sf_seen_claim_updates", JSON.stringify(seen)); }catch(e){}
   document.getElementById("custClaimAlertBanner").classList.add("hidden");
   if(myClaimsCache.length===1) openClaimDetail(myClaimsCache[0].id);
+  else switchCustomerSection("claims");
+}
+function switchCustomerSection(section){
+  custSection = section;
+  document.getElementById("custJobsArea").classList.toggle("hidden", section!=="jobs");
+  document.getElementById("custClaimsArea").classList.toggle("hidden", section!=="claims");
+  document.getElementById("custTabJobsBtn").classList.toggle("admin-tab-on", section==="jobs");
+  document.getElementById("custTabClaimsBtn").classList.toggle("admin-tab-on", section==="claims");
+  if(section==="claims") renderCustomerClaimsList();
+}
+function renderCustomerClaimsList(){
+  const bar = document.getElementById("custClaimFilterBar");
+  const chips = [{key:"all",label:"ทั้งหมด"}, ...CLAIM_STATUSES];
+  bar.innerHTML = chips.map(c=>{
+    const count = c.key==="all" ? myClaimsCache.length : myClaimsCache.filter(x=>x.status===c.key).length;
+    return `<button onclick="custClaimFilter='${c.key}';renderCustomerClaimsList()" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border ${custClaimFilter===c.key?'bg-rose-600 text-white border-rose-600':'bg-white text-ink-500 border-ink-200'}">${esc(c.label)} (${count})</button>`;
+  }).join("");
+
+  const list = document.getElementById("custClaimsList");
+  const empty = document.getElementById("custClaimsEmpty");
+  const rows = custClaimFilter==="all" ? myClaimsCache : myClaimsCache.filter(c=>c.status===custClaimFilter);
+  if(!rows.length){ list.innerHTML=""; empty.classList.remove("hidden"); return; }
+  empty.classList.add("hidden");
+  list.innerHTML = rows.map(c=>{
+    const cs = claimStatusOf(c.status);
+    return `
+    <div class="bg-white rounded-xl border border-ink-100 p-4 flex items-center gap-4 lift cursor-pointer fade-in" style="border-left:3px solid ${cs.dot}" onclick="openClaimDetail('${c.id}')">
+      <div class="w-11 h-11 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style="background:${cs.dot}1A;color:${cs.dot}">🛡️</div>
+      <div class="min-w-0 flex-1">
+        <div class="font-semibold text-ink-900 truncate">${esc(c.title)}</div>
+        <div class="text-xs text-ink-400 truncate">${thDate(c.created_at?c.created_at.slice(0,10):null)}</div>
+      </div>
+      <span class="badge ${cs.soft} ring-1 flex-shrink-0">${esc(cs.label)}</span>
+    </div>`;
+  }).join("");
 }
 function openClaimForm(jobId){
   activeClaimJobId = jobId;
