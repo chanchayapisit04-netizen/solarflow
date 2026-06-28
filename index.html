@@ -65,6 +65,10 @@ tailwind.config = {
   .sheen::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(110deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-18deg);animation:sheenMove 4.5s ease-in-out infinite}
   @keyframes sheenMove{0%,60%{left:-60%}100%{left:130%}}
 
+  /* ===== "แนะนำ" ribbon corner badge ===== */
+  .best-ribbon{position:absolute;top:14px;right:-30px;width:140px;transform:rotate(40deg);z-index:5;pointer-events:none}
+  .best-ribbon span{display:block;background:linear-gradient(135deg,#fbbf24,#d97706);color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.02em;text-align:center;padding:4px 0;box-shadow:0 3px 10px -2px rgba(217,119,6,.55)}
+
   /* ===== sun glow blobs (hero atmosphere) ===== */
   .sun-glow{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;animation:drift 18s ease-in-out infinite}
   @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-20px) scale(1.12)}}
@@ -337,24 +341,22 @@ tailwind.config = {
   .cert-eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;color:#b45309;text-transform:uppercase}
   .cert-company{font-size:19px;font-weight:800;color:#1e293b;margin-top:4px}
 
-  .cert-slider-wrap{margin:22px 0 18px;position:relative;z-index:1}
-  .cert-slider-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .cert-slider-label span:first-child{font-size:12px;color:#92722a;font-weight:600}
-  .cert-slider-value{font-size:22px;font-weight:800;color:#b45309}
-  input.cert-slider{width:100%;height:8px;border-radius:9999px;background:linear-gradient(90deg,#fde68a,#f59e0b);outline:none;appearance:none;cursor:pointer}
-  input.cert-slider::-webkit-slider-thumb{appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:4px solid #d97706;box-shadow:0 4px 10px rgba(217,119,6,.4);cursor:pointer;transition:transform .15s}
-  input.cert-slider::-webkit-slider-thumb:hover{transform:scale(1.15)}
-  input.cert-slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:4px solid #d97706;cursor:pointer}
-  .cert-slider-ticks{display:flex;justify-content:space-between;font-size:10px;color:#c9a86a;margin-top:4px}
+  #certBody{margin:20px 0 4px;transition:opacity .22s ease;min-height:170px}
+  .cert-customer-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .cert-customer-name{font-size:20px;font-weight:800;color:#1e293b}
+  .cert-customer-meta{font-size:12px;color:#92722a;margin-top:2px}
+  .cert-skeleton{padding:8px 0}
 
-  .cert-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+  .cert-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
   .cert-stat{background:rgba(217,119,6,.06);border-radius:14px;padding:12px 8px;text-align:center}
   .cert-stat .v{font-size:19px;font-weight:800;color:#1e293b}
   .cert-stat .l{font-size:10.5px;color:#94756e;margin-top:1px}
 
-  .cert-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;padding-top:16px;border-top:1px dashed rgba(217,119,6,.25)}
+  .cert-footer{display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:16px;border-top:1px dashed rgba(217,119,6,.25)}
   .cert-sig{font-family:Georgia,serif;font-style:italic;font-size:16px;color:#475569;border-bottom:1.5px solid #94a3b8;padding-bottom:2px}
   .cert-sig-label{font-size:10px;color:#94a3b8;margin-top:3px}
+  .cert-dot{width:7px;height:7px;border-radius:50%;background:#e2c98a;cursor:pointer;transition:all .2s}
+  .cert-dot.on{background:#d97706;width:18px;border-radius:9999px}
 
   .warranty-mini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .warranty-mini-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;transition:transform .25s}
@@ -558,37 +560,25 @@ tailwind.config = {
       <div class="grid lg:grid-cols-[1.05fr_1fr] gap-10 items-start">
 
         <!-- INTERACTIVE CERTIFICATE -->
-        <div class="warranty-cert reveal">
+        <div class="warranty-cert reveal" id="certCard">
           <i class="cert-corner tl"></i><i class="cert-corner tr"></i><i class="cert-corner bl"></i><i class="cert-corner br"></i>
           <div class="cert-seal">🛡️</div>
 
-          <div class="cert-eyebrow">ใบรับประกันผลงานดิจิทัล · ตัวอย่าง</div>
+          <div class="cert-eyebrow" id="certEyebrow">ใบรับประกันผลงานดิจิทัล</div>
           <div class="cert-company">บริษัท อภิศิริโซลาร์เซลล์ จำกัด</div>
 
-          <div class="cert-slider-wrap">
-            <div class="cert-slider-label">
-              <span>ลองเลื่อนเลือกระยะเวลารับประกัน</span>
-              <span class="cert-slider-value"><span id="certYears">5</span> ปี</span>
+          <div id="certBody">
+            <!-- เนื้อหาจริงจะถูกเติมโดย JS (renderWarrantyCertificate) -->
+            <div class="cert-skeleton">
+              <div class="ld h-4 w-2/3 rounded mb-3"></div>
+              <div class="ld h-8 rounded mb-2"></div>
+              <div class="ld h-4 w-1/2 rounded"></div>
             </div>
-            <input type="range" min="1" max="10" value="5" step="1" id="warrantySlider" class="cert-slider" oninput="updateWarrantyDemo(this.value)">
-            <div class="cert-slider-ticks"><span>1 ปี</span><span>10 ปี</span></div>
-          </div>
-
-          <div class="progress-track mb-2"><div class="progress-fill bg-gradient-to-r from-amber-400 to-emerald-500" id="certProgressFill" style="width:0%"></div></div>
-          <div class="flex justify-between text-xs text-ink-400 mb-2">
-            <span>เริ่ม <span id="certStartDate">—</span></span>
-            <span>ครบกำหนด <span id="certEndDate">—</span></span>
-          </div>
-
-          <div class="cert-stats">
-            <div class="cert-stat"><div class="v num"><span id="certYearsTotal">5</span></div><div class="l">ปีที่รับประกัน</div></div>
-            <div class="cert-stat"><div class="v num" id="certYearsLeft">—</div><div class="l">ปีที่เหลือ (ตัวอย่าง)</div></div>
-            <div class="cert-stat"><div class="v num" id="certPct">—</div><div class="l">ของระยะประกัน</div></div>
           </div>
 
           <div class="cert-footer">
             <div><div class="cert-sig">อภิสิทธิ์ จันทร์ฉาย</div><div class="cert-sig-label">ผู้ก่อตั้ง · ผู้อนุมัติการรับประกัน</div></div>
-            <div class="text-right"><div class="text-[11px] text-ink-400">ออกใบรับประกันวันที่ส่งมอบงาน</div><div class="text-[11px] text-ink-400">เลขที่อ้างอิงออกอัตโนมัติทุกงาน</div></div>
+            <div id="certDots" class="flex gap-1.5"></div>
           </div>
         </div>
 
@@ -892,6 +882,12 @@ const db = {
     if(error){ console.error(error); return []; }
     return data || [];
   },
+  async listWarrantyShowcase(){
+    if(!sb) return [];
+    const { data, error } = await sb.from("public_warranty_showcase").select("*");
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
   async listJobStats(){
     if(!sb) return null;
     const { data, error } = await sb.from("jobs").select("status,total_price");
@@ -1052,8 +1048,8 @@ function openProfileMenu(){
 function renderServiceCards(){
   const wrap = document.getElementById("serviceCards");
   wrap.innerHTML = SERVICES.map((s,i)=>`
-    <div class="bg-white rounded-2xl border ${i===1?'border-amber-300 ring-2 ring-amber-200':'border-ink-100'} p-6 lift ${i===1?'sheen':''} relative">
-      ${i===1?'<span class="absolute -top-3 left-5 bg-amber-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">แนะนำ</span>':''}
+    <div class="bg-white rounded-2xl border ${i===1?'border-amber-300 ring-2 ring-amber-200':'border-ink-100'} p-6 pt-7 lift ${i===1?'sheen':''} relative overflow-hidden">
+      ${i===1?'<div class="best-ribbon"><span>⭐ แนะนำ</span></div>':''}
       <div class="text-3xl mb-3 wiggle-on-hover inline-block">${s.icon}</div>
       <div class="font-bold text-ink-900 leading-snug mb-1.5">${esc(s.label)}</div>
       <div class="text-ink-500 text-[13px] leading-relaxed mb-4">${esc(s.desc)}</div>
@@ -1091,23 +1087,79 @@ async function renderPortfolio(){
 }
 function showLightbox(url){ document.getElementById("lightboxImg").src = url; openOv("ovLightbox"); }
 
-/* ===================== WARRANTY CERTIFICATE INTERACTIVE DEMO ===================== */
-function updateWarrantyDemo(years){
-  years = Number(years) || 5;
-  document.getElementById("certYears").textContent = years;
-  document.getElementById("certYearsTotal").textContent = years;
-  // วันเริ่มตัวอย่าง: สมมติว่าเริ่มไปแล้ว 8 เดือนก่อนวันนี้ เพื่อให้เห็นภาพความคืบหน้าจริง
-  const start = new Date(); start.setMonth(start.getMonth()-8);
-  const end = new Date(start); end.setFullYear(end.getFullYear()+years);
-  const now = new Date();
-  const totalMs = end-start, usedMs = Math.min(Math.max(now-start,0), totalMs);
-  const pct = totalMs>0 ? Math.min(100, Math.round((usedMs/totalMs)*100)) : 100;
-  const remYears = Math.max((end-now)/(365.25*24*3600*1000), 0);
-  document.getElementById("certProgressFill").style.width = pct+"%";
-  document.getElementById("certPct").textContent = pct+"%";
-  document.getElementById("certYearsLeft").textContent = remYears.toFixed(1);
-  document.getElementById("certStartDate").textContent = start.toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"});
-  document.getElementById("certEndDate").textContent = end.toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"});
+/* ===================== WARRANTY CERTIFICATE — ข้อมูลจริงจากลูกค้า ===================== */
+let certItems = [];
+let certIndex = 0;
+let certTimer = null;
+
+async function renderWarrantyCertificate(){
+  const body = document.getElementById("certBody");
+  const eyebrow = document.getElementById("certEyebrow");
+  const dotsWrap = document.getElementById("certDots");
+  if(!body) return;
+  if(certTimer){ clearInterval(certTimer); certTimer = null; }
+  certItems = await db.listWarrantyShowcase();
+  if(!certItems.length){
+    eyebrow.textContent = "ใบรับประกันผลงานดิจิทัล";
+    body.style.opacity = 1;
+    body.innerHTML = `
+      <div class="text-center py-7">
+        <div class="text-3xl mb-2">🛡️</div>
+        <div class="text-sm text-ink-500 font-medium">ยังไม่มีผลงานที่เผยแพร่ในหน้านี้</div>
+        <div class="text-xs text-ink-400 mt-1.5 max-w-[260px] mx-auto leading-relaxed">ใบรับประกันของลูกค้าจริงจะแสดงที่นี่ เมื่องานเสร็จสมบูรณ์และเจ้าของกิจการกดยินยอมให้เผยแพร่</div>
+      </div>`;
+    dotsWrap.innerHTML = "";
+    return;
+  }
+  certIndex = 0;
+  renderCertEyebrow();
+  renderCertItemDOM(0, false);
+  dotsWrap.innerHTML = certItems.map((_,i)=>`<span class="cert-dot ${i===0?'on':''}" onclick="showCertItem(${i})"></span>`).join("");
+  if(certItems.length>1){
+    certTimer = setInterval(()=>{ showCertItem((certIndex+1)%certItems.length); }, 5000);
+  }
+}
+function renderCertEyebrow(){
+  const eyebrow = document.getElementById("certEyebrow");
+  eyebrow.textContent = "ใบรับประกันผลงานดิจิทัล · ลูกค้าจริง" + (certItems.length>1 ? ` (${certIndex+1}/${certItems.length})` : "");
+}
+function certItemHTML(item){
+  const wi = warrantyInfo(item.warranty_start, item.warranty_years) || { pct:0, remYears:0, startISO:item.warranty_start, endISO:item.warranty_start };
+  const serviceLabel = (item.services||[]).map(s=>s.label).join(" · ") || "งานโซลาร์เซลล์";
+  return `
+    <div class="cert-customer-row">
+      <div>
+        <div class="cert-customer-name">${esc(item.customer_display)}</div>
+        <div class="cert-customer-meta">${esc(item.province||"")}${item.province?" · ":""}${esc(serviceLabel)}</div>
+      </div>
+      <span class="badge ${wi.expired?'bg-ink-100 text-ink-500':'bg-emerald-50 text-emerald-700'} flex-shrink-0">${wi.expired?'ครบกำหนดแล้ว':'ใช้งานอยู่'}</span>
+    </div>
+    <div class="progress-track mb-2 mt-3"><div class="progress-fill bg-gradient-to-r from-amber-400 to-emerald-500" style="width:${wi.pct}%"></div></div>
+    <div class="flex justify-between text-xs text-ink-400 mb-1">
+      <span>เริ่ม ${thDate(wi.startISO)}</span>
+      <span>ครบกำหนด ${thDate(wi.endISO)}</span>
+    </div>
+    <div class="cert-stats">
+      <div class="cert-stat"><div class="v num">${item.warranty_years}</div><div class="l">ปีที่รับประกัน</div></div>
+      <div class="cert-stat"><div class="v num">${wi.remYears.toFixed(1)}</div><div class="l">ปีที่เหลือจริง</div></div>
+      <div class="cert-stat"><div class="v num">${wi.pct}%</div><div class="l">ของระยะประกัน</div></div>
+    </div>`;
+}
+function renderCertItemDOM(i, animate){
+  const body = document.getElementById("certBody");
+  if(animate){
+    body.style.opacity = 0;
+    setTimeout(()=>{ body.innerHTML = certItemHTML(certItems[i]); body.style.opacity = 1; }, 220);
+  } else {
+    body.innerHTML = certItemHTML(certItems[i]);
+  }
+}
+function showCertItem(i){
+  certIndex = i;
+  renderCertItemDOM(i, true);
+  renderCertEyebrow();
+  document.querySelectorAll(".cert-dot").forEach((d,idx)=>d.classList.toggle("on", idx===i));
+  if(certTimer){ clearInterval(certTimer); certTimer = setInterval(()=>{ showCertItem((certIndex+1)%certItems.length); }, 5000); }
 }
 function renderWarrantyPortfolioMini(){
   const wrap = document.getElementById("warrantyPortfolioMini");
@@ -1299,6 +1351,10 @@ function renderJobDetail(job, photos, slips, comments){
         <div><label class="text-xs text-ink-400">วันส่งมอบงาน</label><input type="date" id="warrantyStartInput" value="${job.warranty_start||todayISO()}" class="w-full border border-ink-200 rounded-lg px-2 py-1.5 text-sm mt-1"></div>
         <div><label class="text-xs text-ink-400">ระยะรับประกัน (ปี)</label><select id="warrantyYearsInput" class="w-full border border-ink-200 rounded-lg px-2 py-1.5 text-sm mt-1">${[1,2,3,4,5,6,7,8,9,10].map(y=>`<option value="${y}" ${Number(job.warranty_years)===y?'selected':''}>${y} ปี</option>`).join("")}</select></div>
         <button onclick="saveWarranty()" class="pbtn pbtn-primary !text-xs !py-2 col-span-2 mt-1">บันทึกการรับประกัน</button>
+        <label class="col-span-2 flex items-center gap-2.5 bg-amber-50 rounded-lg px-3 py-2.5 mt-1 cursor-pointer">
+          <input type="checkbox" id="publicShowcaseToggle" ${job.is_public_showcase?'checked':''} onchange="togglePublicShowcase(this.checked)" class="w-4 h-4 accent-amber-600">
+          <span class="text-xs text-amber-800">🌟 แสดงงานนี้ในหน้า "ใบรับประกัน" สาธารณะ (ชื่อลูกค้าจะปกปิดนามสกุล เช่น "อภิสิทธิ์ จ.") — เปิดเฉพาะงานที่มั่นใจว่าลูกค้ายินยอม</span>
+        </label>
       </div>
     </div>` : "";
 
@@ -1401,6 +1457,14 @@ async function saveWarranty(){
   const years = Number(document.getElementById("warrantyYearsInput").value);
   const updated = await db.updateJob(activeJob.id, { warranty_start:start, warranty_years:years });
   if(updated){ activeJob=updated; syncJobInCache(updated); toast("บันทึกการรับประกันแล้ว","ok"); await refreshJobDetail(); }
+}
+async function togglePublicShowcase(checked){
+  const updated = await db.updateJob(activeJob.id, { is_public_showcase: checked });
+  if(updated){
+    activeJob = updated; syncJobInCache(updated);
+    toast(checked ? "เปิดแสดงในหน้ารับประกันสาธารณะแล้ว" : "ปิดการแสดงต่อสาธารณะแล้ว","ok");
+    renderWarrantyCertificate();
+  }
 }
 function syncJobInCache(updated){
   [custJobsCache, adminJobsCache].forEach(arr=>{
@@ -1608,7 +1672,7 @@ renderPortfolio();
 renderHeroStats();
 renderAuthSlot();
 renderWarrantyPortfolioMini();
-updateWarrantyDemo(5);
+renderWarrantyCertificate();
 initAuth();
 
 /* ===================== SCROLL REVEAL ===================== */
