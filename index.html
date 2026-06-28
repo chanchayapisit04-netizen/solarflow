@@ -295,8 +295,7 @@ tailwind.config = {
   .trust-portrait-wrap{position:relative;width:168px;height:168px;margin:42px auto 0}
   .trust-portrait-wrap::before{content:"";position:absolute;inset:-20px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.4),transparent 70%);animation:haloPulse 2.6s ease-in-out infinite;z-index:-1}
   @keyframes haloPulse{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:.9;transform:scale(1.14)}}
-  .trust-ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#fbbf24,#10b981,#3b82f6,#f59e0b,#fbbf24);animation:ringSpin 7s linear infinite;padding:4px}
-  @keyframes ringSpin{to{transform:rotate(360deg)}}
+  .trust-ring{position:absolute;inset:0;border-radius:50%;background:linear-gradient(145deg,#fbbf24,#10b981,#3b82f6);padding:4px}
   .trust-ring-inner{width:100%;height:100%;border-radius:50%;overflow:hidden;background:#0b0e17;padding:4px}
   .trust-ring-inner img{display:block;width:100%;height:100%}
   .trust-seal{position:absolute;bottom:-4px;right:-4px;width:44px;height:44px;border-radius:50%;background:linear-gradient(150deg,#34d399,#059669);color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -4px rgba(5,150,105,.75);border:3px solid #0b0e17;animation:sealPop .65s cubic-bezier(.2,.9,.3,1.4) both;animation-delay:.7s;z-index:3}
@@ -1066,9 +1065,15 @@ function customerJobCard(j){
       <span class="badge ${st.soft} ring-1 flex-shrink-0">${esc(st.label)}</span>
     </div>
     <div class="mt-4">${renderStepper(j.status)}</div>
+    ${wi ? `
+    <div class="bg-emerald-50 rounded-xl p-3.5 mt-4">
+      <div class="flex justify-between text-xs mb-1.5"><span class="font-semibold text-emerald-700">🛡️ อยู่ในระยะรับประกัน</span><span class="text-emerald-600 font-medium">เหลือ ${wi.remYears.toFixed(1)} ปี</span></div>
+      <div class="progress-track"><div class="progress-fill bg-emerald-500" style="width:${wi.pct}%"></div></div>
+      <div class="flex justify-between text-[11px] text-ink-400 mt-1"><span>เริ่ม ${thDate(wi.startISO)}</span><span>ครบกำหนด ${thDate(wi.endISO)}</span></div>
+    </div>` : ""}
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-ink-50">
       <div class="font-bold text-ink-900">${baht(j.total_price)}</div>
-      ${wi ? `<div class="text-xs text-emerald-600 font-medium">🛡️ รับประกันเหลือ ${wi.remYears.toFixed(1)} ปี</div>` : `<div class="text-xs text-amber-600 font-medium">ดูรายละเอียด →</div>`}
+      <div class="text-xs text-amber-600 font-medium">ดูรายละเอียด →</div>
     </div>
   </div>`;
 }
@@ -1217,7 +1222,7 @@ function renderJobDetail(job, photos, slips, comments){
     <div class="mb-5">
       <div class="flex items-center justify-between mb-2">
         <div class="text-xs font-semibold text-ink-400 uppercase tracking-wide">สลิปการโอนเงิน</div>
-        ${!isAdmin ? `<label class="text-xs text-brand-600 font-semibold cursor-pointer">+ อัปโหลดสลิป<input type="file" accept="image/*" class="hidden" onchange="uploadSlip(event)"></label>` : ""}
+        <label class="text-xs text-brand-600 font-semibold cursor-pointer">+ ${isAdmin?'อัปโหลดสลิปแทนลูกค้า':'อัปโหลดสลิป'}<input type="file" accept="image/*" class="hidden" onchange="uploadSlip(event)"></label>
       </div>
       <div id="slipUploadProgress" class="hidden text-xs text-ink-400 mb-2">กำลังอัปโหลด…</div>
       <div class="space-y-2">
@@ -1226,15 +1231,16 @@ function renderJobDetail(job, photos, slips, comments){
             <img src="${esc(s.url)}" class="w-12 h-12 rounded-lg object-cover cursor-pointer flex-shrink-0" onclick="showLightbox('${esc(s.url)}')">
             <div class="min-w-0 flex-1">
               <div class="text-xs text-ink-400">${thDate(s.created_at?s.created_at.slice(0,10):null)}</div>
-              <span class="badge ${s.status==='verified'?'bg-emerald-50 text-emerald-700':s.status==='rejected'?'bg-rose-50 text-rose-700':'bg-amber-50 text-amber-700'} !text-[11px]">${s.status==='verified'?'ตรวจสอบแล้ว':s.status==='rejected'?'ไม่ผ่านการตรวจสอบ':'รอตรวจสอบ'}</span>
+              <span class="badge ${s.status==='verified'?'bg-emerald-50 text-emerald-700':s.status==='rejected'?'bg-rose-50 text-rose-700':'bg-amber-50 text-amber-700'} !text-[11px]">${s.status==='verified'?'✓ ตรวจสอบแล้ว':s.status==='rejected'?'✕ ไม่ผ่านการตรวจสอบ':'รอตรวจสอบ'}</span>
             </div>
             ${isAdmin ? `
             <div class="flex gap-1.5 flex-shrink-0">
-              <button onclick="setSlipStatus('${s.id}','verified')" class="pbtn pbtn-emerald !text-[11px] !px-2 !py-1">✓ ผ่าน</button>
-              <button onclick="setSlipStatus('${s.id}','rejected')" class="pbtn pbtn-danger !text-[11px] !px-2 !py-1">✕ ไม่ผ่าน</button>
+              <button onclick="setSlipStatus('${s.id}','verified')" class="pbtn !text-[11px] !px-2 !py-1 ${s.status==='verified'?'pbtn-emerald ring-2 ring-emerald-300':'pbtn-ghost'}">✓ ผ่าน</button>
+              <button onclick="setSlipStatus('${s.id}','rejected')" class="pbtn !text-[11px] !px-2 !py-1 ${s.status==='rejected'?'pbtn-danger ring-2 ring-rose-300':'pbtn-ghost'}">✕ ไม่ผ่าน</button>
             </div>` : ""}
           </div>`).join("") || `<div class="text-xs text-ink-400 py-2 text-center">ยังไม่มีสลิป</div>`}
       </div>
+      ${isAdmin ? `<div class="text-[11px] text-ink-400 mt-2 leading-relaxed">💡 การกด "ผ่าน/ไม่ผ่าน" คือยืนยันสลิปเท่านั้น ไม่เปลี่ยนสถานะงานอัตโนมัติ — ขยับขั้นตอนงานต่อได้ที่ช่อง "เปลี่ยนสถานะ" ด้านบน</div>` : ""}
     </div>`;
 
   const commentsBlock = `
@@ -1323,8 +1329,11 @@ async function uploadSlip(e){
   prog.classList.remove("hidden");
   const url = await db.uploadFile("payment-slips", file);
   if(url){
-    await db.addSlip({ id:pid(), job_id:activeJob.id, customer_email:currentUser.email, url, status:"pending" });
-    toast("อัปโหลดสลิปสำเร็จ รอการตรวจสอบ","ok");
+    await db.addSlip({
+      id:pid(), job_id:activeJob.id, customer_email:activeJob.customer_email, url,
+      status: isAdmin ? "verified" : "pending"
+    });
+    toast(isAdmin ? "อัปโหลดสลิปสำเร็จ (ยืนยันแล้วโดยแอดมิน)" : "อัปโหลดสลิปสำเร็จ รอการตรวจสอบ","ok");
   }
   prog.classList.add("hidden");
   await refreshJobDetail();
