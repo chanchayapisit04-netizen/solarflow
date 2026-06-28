@@ -425,6 +425,13 @@ tailwind.config = {
   .stat-glow-amber{border-color:#fde68a}.stat-glow-amber::before{background:#f59e0b}.stat-glow-amber:hover{box-shadow:0 14px 26px -10px rgba(245,158,11,.35)}
   .stat-glow-icon{font-size:18px;margin-bottom:4px;opacity:.85}
 
+  .admin-tab{padding:10px 4px;margin-bottom:-1px;border-bottom:2.5px solid transparent;font-size:14px;font-weight:600;color:#94a3b8;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
+  .admin-tab:hover{color:#475569}
+  .admin-tab.admin-tab-on{color:rgb(var(--b600));border-bottom-color:rgb(var(--b600))}
+  #claimsBadge{background:#f43f5e;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9999px;min-width:18px;text-align:center}
+  html.dark .admin-tab{color:#76829c}
+  html.dark .admin-tab:hover{color:#cbd5e1}
+
   .portfolio-tile{transition:box-shadow .3s ease,transform .3s ease}
   .portfolio-tile:hover{box-shadow:0 0 0 3px rgba(245,158,11,.6),0 16px 30px -10px rgba(0,0,0,.5)}
 
@@ -607,7 +614,7 @@ tailwind.config = {
       <h2 class="text-3xl sm:text-4xl font-extrabold text-ink-900 mt-3">เลือกบริการที่ตรงกับความต้องการ</h2>
       <p class="text-ink-500 mt-3">เลือกได้มากกว่า 1 บริการ ระบบจะรวมราคาให้อัตโนมัติ</p>
     </div>
-    <div id="serviceCards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 reveal-stagger relative z-10"></div>
+    <div id="serviceCards" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 reveal-stagger relative z-10"></div>
   </section>
 
   <!-- ===================== FOUNDER / TRUST SHOWCASE ===================== -->
@@ -817,7 +824,14 @@ tailwind.config = {
       <button onclick="openNewJobForm(true)" class="pbtn pbtn-primary !px-5 !py-3">+ สร้างงานให้ลูกค้า</button>
     </div>
   </div>
-  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-6">
+    <div class="flex items-center gap-2 border-b border-ink-100 mb-6">
+      <button id="tabJobsBtn" onclick="switchAdminSection('jobs')" class="admin-tab admin-tab-on">📋 งานทั้งหมด</button>
+      <button id="tabClaimsBtn" onclick="switchAdminSection('claims')" class="admin-tab">🛡️ เคสเคลม <span id="claimsBadge" class="hidden">0</span></button>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-2 pb-8" id="adminJobsArea">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8" id="adminStats">
       <div class="stat-glow-card stat-glow-slate"><div class="stat-glow-icon">📋</div><div class="text-2xl font-bold text-ink-900 num" id="stAll">—</div><div class="text-xs text-ink-400 mt-1">งานทั้งหมด</div></div>
       <div class="stat-glow-card stat-glow-indigo"><div class="stat-glow-icon">⚙️</div><div class="text-2xl font-bold text-indigo-600 num" id="stProgress">—</div><div class="text-xs text-ink-400 mt-1">กำลังดำเนินการ</div></div>
@@ -830,6 +844,17 @@ tailwind.config = {
     <div id="adminJobsLoading" class="space-y-3">
       <div class="ld h-16 rounded-xl"></div><div class="ld h-16 rounded-xl"></div><div class="ld h-16 rounded-xl"></div>
     </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-2 pb-8 hidden" id="adminClaimsArea">
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="stat-glow-card" style="border-color:#fecdd3"><div class="stat-glow-icon" style="opacity:1">🆕</div><div class="text-2xl font-bold text-rose-600 num" id="claimStOpen">—</div><div class="text-xs text-ink-400 mt-1">เปิดเคสใหม่</div></div>
+      <div class="stat-glow-card stat-glow-amber"><div class="stat-glow-icon">🔍</div><div class="text-2xl font-bold text-amber-600 num" id="claimStProgress">—</div><div class="text-xs text-ink-400 mt-1">กำลังตรวจสอบ</div></div>
+      <div class="stat-glow-card stat-glow-emerald"><div class="stat-glow-icon">✅</div><div class="text-2xl font-bold text-emerald-600 num" id="claimStResolved">—</div><div class="text-xs text-ink-400 mt-1">แก้ไขเรียบร้อย</div></div>
+    </div>
+    <div class="flex items-center gap-2 mb-5 overflow-x-auto pb-1" id="adminClaimFilterBar"></div>
+    <div id="adminClaimsList" class="space-y-3"></div>
+    <div id="adminClaimsEmpty" class="hidden text-center py-16 text-ink-400">ยังไม่มีเคสเคลมในหมวดนี้</div>
   </div>
 </div>
 
@@ -874,6 +899,31 @@ tailwind.config = {
       <button onclick="closeOv('ovNewJob')" class="text-white/80 hover:text-white text-xl leading-none">✕</button>
     </div>
     <div class="sheet-b" id="newJobBody"></div>
+  </div>
+</div>
+
+<!-- ===================== CLAIM FORM MODAL ===================== -->
+<div class="ov" id="ovClaimForm">
+  <div class="sheet" data-modal style="max-width:480px">
+    <div class="sheet-h" style="background:linear-gradient(135deg,#f43f5e,#be123c)">
+      <div class="font-bold text-lg">🛡️ แจ้งเครม / รายงานปัญหา</div>
+      <button onclick="closeOv('ovClaimForm')" class="text-white/80 hover:text-white text-xl leading-none">✕</button>
+    </div>
+    <div class="sheet-b" id="claimFormBody"></div>
+  </div>
+</div>
+
+<!-- ===================== CLAIM DETAIL MODAL ===================== -->
+<div class="ov" id="ovClaimDetail">
+  <div class="sheet" data-modal style="max-width:540px">
+    <div class="sheet-h" style="background:linear-gradient(135deg,#f43f5e,#be123c)">
+      <div>
+        <div class="text-xs opacity-80">เคสเคลม</div>
+        <div class="font-bold text-lg" id="claimModalTitle">—</div>
+      </div>
+      <button onclick="closeOv('ovClaimDetail')" class="text-white/80 hover:text-white text-xl leading-none">✕</button>
+    </div>
+    <div class="sheet-b" id="claimModalBody"></div>
   </div>
 </div>
 
@@ -973,7 +1023,8 @@ const SERVICES = [
   { key:"find_contractor", label:"จัดหาผู้รับเหมาโซลาร์เซลล์", price:1000, fixed:true, icon:"🤝", desc:"แนะนำและจัดหาผู้รับเหมาที่เหมาะกับงานของคุณ" },
   { key:"design",          label:"เขียนแบบโซลาร์เซลล์",        price:3500, fixed:true, icon:"📐", desc:"ออกแบบระบบพร้อมแบบสำหรับยื่นขออนุญาต" },
   { key:"install_supervise", label:"ติดตั้งและคุมงานติดตั้ง",    price:null, fixed:false, icon:"🛠️", desc:"ดูแลควบคุมงานติดตั้งให้ตรงตามแบบและมาตรฐาน" },
-  { key:"labor_only",      label:"เหมาเฉพาะค่าแรงติดตั้ง",      price:null, fixed:false, icon:"⚡", desc:"รับเหมาเฉพาะค่าแรงติดตั้งระบบโซลาร์เซลล์" }
+  { key:"labor_only",      label:"เหมาเฉพาะค่าแรงติดตั้ง",      price:null, fixed:false, icon:"⚡", desc:"รับเหมาเฉพาะค่าแรงติดตั้งระบบโซลาร์เซลล์" },
+  { key:"panel_cleaning",  label:"ล้างแผงโซลาร์เซลล์",          price:null, fixed:false, icon:"🧼", desc:"ทำความสะอาดแผงโซลาร์เซลล์ เพิ่มประสิทธิภาพการผลิตไฟฟ้า" }
 ];
 const serviceOf = (k) => SERVICES.find(s=>s.key===k);
 
@@ -989,6 +1040,14 @@ const STATUSES = [
 const statusOf = (k) => STATUSES.find(s=>s.key===k) || STATUSES[0];
 const FLOW = ["pending_review","accepted","quoting","in_progress","installing","completed"];
 const PROVINCES = ["กรุงเทพมหานคร","นนทบุรี","ปทุมธานี","สมุทรปราการ","พระนครศรีอยุธยา","ชลบุรี","ระยอง","นครราชสีมา","ขอนแก่น","อุดรธานี","เชียงใหม่","เชียงราย","พิษณุโลก","นครสวรรค์","สุพรรณบุรี","ราชบุรี","เพชรบุรี","ประจวบคีรีขันธ์","สงขลา","สุราษฎร์ธานี","ภูเก็ต","นครศรีธรรมราช","อุบลราชธานี","สระบุรี","ลพบุรี","อื่นๆ"];
+
+const CLAIM_STATUSES = [
+  { key:"open",        label:"เปิดเคสใหม่",     soft:"bg-rose-50 text-rose-700 ring-rose-200",       dot:"#f43f5e" },
+  { key:"in_progress", label:"กำลังตรวจสอบ",   soft:"bg-amber-50 text-amber-700 ring-amber-200",    dot:"#f59e0b" },
+  { key:"resolved",    label:"แก้ไขเรียบร้อย",  soft:"bg-emerald-50 text-emerald-700 ring-emerald-200", dot:"#10b981" },
+  { key:"rejected",    label:"ไม่อยู่ในเงื่อนไข", soft:"bg-ink-100 text-ink-500 ring-ink-200",        dot:"#94a3b8" }
+];
+const claimStatusOf = (k) => CLAIM_STATUSES.find(s=>s.key===k) || CLAIM_STATUSES[0];
 
 /* ===================== HELPERS ===================== */
 const fmt = (n) => (Number(n)||0).toLocaleString("th-TH");
@@ -1150,6 +1209,48 @@ const db = {
     const { error } = await sb.from("site_settings").upsert({ key, value, updated_at:new Date().toISOString() });
     if(error){ console.error(error); toast("บันทึกค่าไม่สำเร็จ: "+error.message,"err"); return false; }
     return true;
+  },
+  async listClaimsForJob(jobId){
+    if(!sb) return [];
+    const { data, error } = await sb.from("claims").select("*").eq("job_id", jobId).order("created_at",{ascending:false});
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
+  async listAllClaims(){
+    if(!sb) return [];
+    const { data, error } = await sb.from("claims").select("*").order("created_at",{ascending:false});
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
+  async createClaim(row){
+    const { data, error } = await sb.from("claims").insert(row).select().single();
+    if(error){ console.error(error); toast("ส่งเคสเคลมไม่สำเร็จ: "+error.message,"err"); return null; }
+    return data;
+  },
+  async updateClaimStatus(id, status){
+    const { data, error } = await sb.from("claims").update({ status, updated_at:new Date().toISOString() }).eq("id", id).select().single();
+    if(error){ console.error(error); toast("อัปเดตสถานะเคสไม่สำเร็จ","err"); return null; }
+    return data;
+  },
+  async listClaimPhotos(claimId){
+    const { data, error } = await sb.from("claim_photos").select("*").eq("claim_id", claimId).order("created_at",{ascending:true});
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
+  async addClaimPhoto(row){
+    const { error } = await sb.from("claim_photos").insert(row);
+    if(error){ console.error(error); toast("อัปโหลดรูปไม่สำเร็จ: "+error.message,"err"); return false; }
+    return true;
+  },
+  async listClaimComments(claimId){
+    const { data, error } = await sb.from("claim_comments").select("*").eq("claim_id", claimId).order("created_at",{ascending:true});
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
+  async addClaimComment(row){
+    const { data, error } = await sb.from("claim_comments").insert(row).select().single();
+    if(error){ console.error(error); toast("ส่งข้อความไม่สำเร็จ","err"); return null; }
+    return data;
   }
 };
 
@@ -1196,7 +1297,7 @@ function setView(v){
   document.getElementById("view-"+v).classList.add("active");
   window.scrollTo({top:0, behavior:"instant"});
   if(v==="customer") loadCustomerJobs();
-  if(v==="admin") loadAdminJobs();
+  if(v==="admin"){ loadAdminJobs(); loadAdminClaims(); }
 }
 function openLogin(){
   if(currentUser){ setView(isAdmin?"admin":"customer"); return; }
@@ -1232,7 +1333,7 @@ function openProfileMenu(){
 /* ===================== PUBLIC: SERVICES ===================== */
 function renderServiceCards(){
   const wrap = document.getElementById("serviceCards");
-  const glowColors = ["#fbbf24","#f59e0b","#10b981","#3b82f6"];
+  const glowColors = ["#fbbf24","#f59e0b","#10b981","#3b82f6","#06b6d4"];
   wrap.innerHTML = SERVICES.map((s,i)=>`
     <div class="bg-white rounded-2xl border ${i===1?'border-amber-300 ring-2 ring-amber-200':'border-ink-100'} p-6 pt-7 lift ${i===1?'sheen':''} relative overflow-hidden">
       <i class="cert-glow-blob" style="width:90px;height:90px;background:${glowColors[i]};top:-30px;right:-25px;animation-duration:${8+i}s"></i>
@@ -1478,7 +1579,7 @@ function renderAdminJobsList(){
       <div class="w-11 h-11 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style="background:${st.dot}1A;color:${st.dot}">●</div>
       <div class="min-w-0 flex-1">
         <div class="font-semibold text-ink-900 truncate">${esc(j.customer_name||j.customer_email)}</div>
-        <div class="text-xs text-ink-400 truncate">${esc(services||'—')}</div>
+        <div class="text-xs text-ink-400 truncate">${esc(j.customer_email||'')}${services?' · '+esc(services):''}</div>
       </div>
       <div class="text-right flex-shrink-0">
         <div class="font-bold text-ink-900 text-sm">${baht(j.total_price)}</div>
@@ -1497,19 +1598,24 @@ async function openJobDetail(jobId){
   document.getElementById("jobModalTitle").textContent = (job.services||[]).map(s=>s.label).join(" · ") || "งานโซลาร์เซลล์";
   document.getElementById("jobModalBody").innerHTML = `<div class="text-center py-10 text-ink-400">กำลังโหลด…</div>`;
   openOv("ovJob");
-  const [photos, slips, comments] = await Promise.all([db.listPhotos(jobId), db.listSlips(jobId), db.listComments(jobId)]);
-  renderJobDetail(job, photos, slips, comments);
+  const [photos, slips, comments, claims] = await Promise.all([db.listPhotos(jobId), db.listSlips(jobId), db.listComments(jobId), db.listClaimsForJob(jobId)]);
+  renderJobDetail(job, photos, slips, comments, claims);
 }
-function renderJobDetail(job, photos, slips, comments){
+function renderJobDetail(job, photos, slips, comments, claims){
   const st = statusOf(job.status);
   const wi = job.status==="completed" ? warrantyInfo(job.warranty_start, job.warranty_years) : null;
+  claims = claims || [];
 
   const infoBlock = `
-    <div class="grid grid-cols-2 gap-3 text-sm mb-5">
+    <div class="grid grid-cols-2 gap-3 text-sm mb-3">
       <div><div class="text-ink-400 text-xs">ลูกค้า</div><div class="font-medium">${esc(job.customer_name||'—')}</div></div>
       <div><div class="text-ink-400 text-xs">เบอร์โทร</div><div class="font-medium">${esc(job.customer_phone||'—')}</div></div>
       <div><div class="text-ink-400 text-xs">จังหวัด</div><div class="font-medium">${esc(job.province||'—')}</div></div>
       <div><div class="text-ink-400 text-xs">ขนาดระบบ</div><div class="font-medium">${esc(job.system_size||'—')}</div></div>
+    </div>
+    <div class="flex items-center gap-2 text-sm bg-ink-50 rounded-lg px-3 py-2 mb-5">
+      <span class="text-ink-400 flex-shrink-0">✉️</span>
+      <span class="font-medium text-ink-700 truncate">${esc(job.customer_email||'—')}</span>
     </div>
     ${job.note ? `<div class="bg-ink-50 rounded-xl p-3 text-sm text-ink-600 mb-5">📝 ${esc(job.note)}</div>` : ""}
   `;
@@ -1551,6 +1657,29 @@ function renderJobDetail(job, photos, slips, comments){
       <div class="flex justify-between text-sm mb-2"><span class="font-semibold text-emerald-700">🛡️ อยู่ในระยะรับประกัน</span><span class="text-emerald-600 font-medium">${wi.remYears.toFixed(1)} ปีที่เหลือ</span></div>
       <div>${warrantyBarHTML(wi.pct)}</div>
       <div class="flex justify-between text-xs text-ink-400 mt-1.5"><span>เริ่ม ${thDate(wi.startISO)}</span><span>ครบกำหนด ${thDate(wi.endISO)}</span></div>
+    </div>` : "";
+
+  const canClaim = !isAdmin && wi && !wi.expired;
+  const claimsBlock = (claims.length || canClaim) ? `
+    <div class="mb-5">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs font-semibold text-ink-400 uppercase tracking-wide">${isAdmin ? "เคสเคลมของงานนี้" : "การแจ้งเครม"}</div>
+        ${canClaim ? `<button onclick="openClaimForm('${job.id}')" class="text-xs text-rose-600 font-semibold">🛡️ + แจ้งเครม</button>` : ""}
+      </div>
+      <div class="space-y-2">
+        ${claims.map(c=>{
+          const cs = claimStatusOf(c.status);
+          return `
+          <div class="flex items-center gap-3 bg-ink-50 rounded-xl p-2.5 cursor-pointer lift" onclick="openClaimDetail('${c.id}')">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style="background:${cs.dot}1A;color:${cs.dot}">🛡️</div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium text-ink-900 truncate">${esc(c.title)}</div>
+              <div class="text-[11px] text-ink-400">${thDate(c.created_at?c.created_at.slice(0,10):null)}</div>
+            </div>
+            <span class="badge ${cs.soft} ring-1 flex-shrink-0">${esc(cs.label)}</span>
+          </div>`;
+        }).join("") || `<div class="text-xs text-ink-400 py-2 text-center">ยังไม่มีเคสเคลม</div>`}
+      </div>
     </div>` : "";
 
   const photosBlock = `
@@ -1613,12 +1742,12 @@ function renderJobDetail(job, photos, slips, comments){
       </div>
     </div>`;
 
-  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + adminStatusBlock + warrantyDisplay + photosBlock + slipsBlock + commentsBlock;
+  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + adminStatusBlock + warrantyDisplay + claimsBlock + photosBlock + slipsBlock + commentsBlock;
 }
 
 async function refreshJobDetail(){
-  const [photos, slips, comments] = await Promise.all([db.listPhotos(activeJob.id), db.listSlips(activeJob.id), db.listComments(activeJob.id)]);
-  renderJobDetail(activeJob, photos, slips, comments);
+  const [photos, slips, comments, claims] = await Promise.all([db.listPhotos(activeJob.id), db.listSlips(activeJob.id), db.listComments(activeJob.id), db.listClaimsForJob(activeJob.id)]);
+  renderJobDetail(activeJob, photos, slips, comments, claims);
 }
 
 async function saveJobPrice(){
@@ -1736,10 +1865,15 @@ function openNewJobForm(asAdmin){
     <div id="njServices" class="space-y-2 mb-4">
       ${SERVICES.map(s=>`
         <label class="flex items-center gap-3 border border-ink-200 rounded-xl p-3 cursor-pointer has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50">
-          <input type="checkbox" value="${s.key}" onchange="updateNjTotal()" class="w-4 h-4 accent-current">
-          <span class="text-xl">${s.icon}</span>
+          <input type="checkbox" value="${s.key}" onchange="updateNjTotal()" class="w-4 h-4 accent-current flex-shrink-0">
+          <span class="text-xl flex-shrink-0">${s.icon}</span>
           <span class="flex-1 text-sm font-medium">${esc(s.label)}</span>
-          <span class="text-sm font-bold ${s.fixed?'text-ink-900':'text-ink-400'}">${s.fixed?baht(s.price):'รอประเมิน'}</span>
+          ${s.fixed
+            ? `<span class="text-sm font-bold text-ink-900 flex-shrink-0">${baht(s.price)}</span>`
+            : adminMode
+              ? `<input type="number" min="0" step="100" placeholder="รอประเมิน" oninput="updateNjTotal()" onclick="event.stopPropagation()" data-price-for="${s.key}" class="w-28 text-right border border-ink-200 rounded-lg px-2 py-1.5 text-sm flex-shrink-0">`
+              : `<span class="text-sm font-bold text-ink-400 flex-shrink-0">รอประเมิน</span>`
+          }
         </label>`).join("")}
     </div>
     <label class="text-xs text-ink-500 font-medium">หมายเหตุ / รายละเอียดเพิ่มเติม</label>
@@ -1753,15 +1887,27 @@ function openNewJobForm(asAdmin){
   `;
   openOv("ovNewJob");
 }
+function njCustomPrice(key){
+  const input = document.querySelector(`[data-price-for="${key}"]`);
+  if(!input) return null;
+  const val = Number(input.value);
+  return val > 0 ? val : null;
+}
 function updateNjTotal(){
-  const checked = Array.from(document.querySelectorAll("#njServices input:checked")).map(i=>i.value);
-  const total = checked.reduce((a,k)=>{ const s=serviceOf(k); return a + (s.fixed?s.price:0); },0);
-  document.getElementById("njTotal").textContent = baht(total) + (checked.some(k=>!serviceOf(k).fixed)?" + รอประเมิน":"");
+  const checked = Array.from(document.querySelectorAll("#njServices input[type=checkbox]:checked")).map(i=>i.value);
+  let total = 0, hasPending = false;
+  checked.forEach(k=>{
+    const s = serviceOf(k);
+    if(s.fixed){ total += s.price; return; }
+    const custom = njCustomPrice(k);
+    if(custom!=null) total += custom; else hasPending = true;
+  });
+  document.getElementById("njTotal").textContent = baht(total) + (hasPending ? " + รอประเมิน" : "");
 }
 async function submitNewJob(adminMode){
   const name = document.getElementById("njName").value.trim();
   const phone = document.getElementById("njPhone").value.trim();
-  const checked = Array.from(document.querySelectorAll("#njServices input:checked")).map(i=>i.value);
+  const checked = Array.from(document.querySelectorAll("#njServices input[type=checkbox]:checked")).map(i=>i.value);
   let email = currentUser.email;
   if(adminMode){
     email = document.getElementById("njEmail").value.trim();
@@ -1770,7 +1916,11 @@ async function submitNewJob(adminMode){
   email = email.toLowerCase();
   if(!name || !phone){ toast("กรอกชื่อและเบอร์โทรให้ครบ","err"); return; }
   if(!checked.length){ toast("เลือกบริการอย่างน้อย 1 รายการ","err"); return; }
-  const services = checked.map(k=>{ const s=serviceOf(k); return { key:s.key, label:s.label, price:s.price }; });
+  const services = checked.map(k=>{
+    const s = serviceOf(k);
+    const price = s.fixed ? s.price : njCustomPrice(k);
+    return { key:s.key, label:s.label, price };
+  });
   const total = services.reduce((a,s)=>a+(s.price||0),0);
   const row = {
     id: uid(), customer_email: email, customer_name: name, customer_phone: phone,
@@ -1784,6 +1934,165 @@ async function submitNewJob(adminMode){
     toast("ส่งคำขอบริการสำเร็จ!","ok");
     if(isAdmin) loadAdminJobs(); else loadCustomerJobs();
   }
+}
+
+/* ===================== WARRANTY CLAIM (เคสเคลม) ===================== */
+let claimPendingPhotos = [];
+let activeClaimJobId = null;
+function openClaimForm(jobId){
+  activeClaimJobId = jobId;
+  claimPendingPhotos = [];
+  document.getElementById("claimFormBody").innerHTML = `
+    <p class="text-xs text-ink-500 mb-4 leading-relaxed">แจ้งปัญหาที่พบกับงานของคุณ ทีมงานจะตรวจสอบและติดต่อกลับโดยเร็วที่สุด แนบรูปประกอบเพื่อให้ตรวจสอบได้รวดเร็วขึ้น</p>
+    <label class="text-xs text-ink-500 font-medium">หัวข้อปัญหา *</label>
+    <input id="claimTitle" placeholder="เช่น แผงโซลาร์เซลล์มีรอยรั่ว" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1 mb-4">
+    <label class="text-xs text-ink-500 font-medium">รายละเอียด *</label>
+    <textarea id="claimDesc" rows="4" placeholder="อธิบายปัญหาที่พบ เกิดขึ้นเมื่อไหร่ ลักษณะอย่างไร" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1 mb-4"></textarea>
+    <label class="text-xs text-ink-500 font-medium mb-2 block">รูปภาพประกอบ</label>
+    <label class="dz block mb-2">
+      <input type="file" accept="image/*" multiple class="hidden" onchange="stageClaimPhotos(event)">
+      📷 แตะเพื่อเลือกรูปภาพ (เลือกได้หลายรูป)
+    </label>
+    <div id="claimPhotoPreview" class="pgrid mb-4"></div>
+    <button onclick="submitClaim()" class="pbtn !bg-rose-600 hover:!bg-rose-700 w-full !py-3 !text-white">🛡️ ส่งเคสเคลม</button>
+  `;
+  openOv("ovClaimForm");
+}
+function stageClaimPhotos(e){
+  const files = Array.from(e.target.files||[]);
+  claimPendingPhotos = claimPendingPhotos.concat(files);
+  const prev = document.getElementById("claimPhotoPreview");
+  prev.innerHTML = claimPendingPhotos.map((f,i)=>`<div class="relative"><img src="${URL.createObjectURL(f)}"><button onclick="claimPendingPhotos.splice(${i},1);stageClaimPhotos({target:{files:[]}})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/55 text-white text-[10px] flex items-center justify-center">✕</button></div>`).join("");
+}
+async function submitClaim(){
+  const title = document.getElementById("claimTitle").value.trim();
+  const description = document.getElementById("claimDesc").value.trim();
+  if(!title || !description){ toast("กรอกหัวข้อและรายละเอียดให้ครบ","err"); return; }
+  const job = (isAdmin?adminJobsCache:custJobsCache).find(j=>j.id===activeClaimJobId) || activeJob;
+  const claim = await db.createClaim({
+    id: pid(), job_id: activeClaimJobId, customer_email: job.customer_email, customer_name: job.customer_name,
+    title, description, status: "open"
+  });
+  if(!claim) return;
+  for(const f of claimPendingPhotos){
+    const url = await db.uploadFile("claim-photos", f);
+    if(url) await db.addClaimPhoto({ id:pid(), claim_id: claim.id, url });
+  }
+  closeOv("ovClaimForm");
+  toast("ส่งเคสเคลมสำเร็จ ทีมงานจะตรวจสอบโดยเร็ว","ok");
+  if(activeJob && activeJob.id===activeClaimJobId) await refreshJobDetail();
+}
+
+let activeClaim = null;
+async function openClaimDetail(claimId){
+  const { data: claim, error } = await sb.from("claims").select("*").eq("id", claimId).single();
+  if(error || !claim){ toast("ไม่พบเคสเคลมนี้","err"); return; }
+  activeClaim = claim;
+  const [photos, comments] = await Promise.all([db.listClaimPhotos(claimId), db.listClaimComments(claimId)]);
+  renderClaimDetail(claim, photos, comments);
+  openOv("ovClaimDetail");
+}
+function renderClaimDetail(claim, photos, comments){
+  const cs = claimStatusOf(claim.status);
+  document.getElementById("claimModalTitle").textContent = claim.title;
+  document.getElementById("claimModalBody").innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <div class="text-xs text-ink-400">${esc(claim.customer_name||claim.customer_email)} · ${thDate(claim.created_at?claim.created_at.slice(0,10):null)}</div>
+      <span class="badge ${cs.soft} ring-1">${esc(cs.label)}</span>
+    </div>
+    <p class="text-sm text-ink-700 bg-ink-50 rounded-xl p-3 mb-4 leading-relaxed">${esc(claim.description)}</p>
+    ${isAdmin ? `
+    <label class="text-xs text-ink-500 font-medium">เปลี่ยนสถานะเคส</label>
+    <select id="claimStatusSelect" onchange="changeClaimStatus('${claim.id}')" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1 mb-4 bg-white">
+      ${CLAIM_STATUSES.map(s=>`<option value="${s.key}" ${s.key===claim.status?'selected':''}>${esc(s.label)}</option>`).join("")}
+    </select>` : ""}
+    <div class="text-xs font-semibold text-ink-400 uppercase tracking-wide mb-2">รูปภาพประกอบ</div>
+    <div class="pgrid mb-4">
+      ${photos.map(p=>`<img src="${esc(p.url)}" onclick="showLightbox('${esc(p.url)}')">`).join("") || `<div class="text-xs text-ink-400 col-span-full text-center py-2">ไม่มีรูปภาพ</div>`}
+    </div>
+    <div class="text-xs font-semibold text-ink-400 uppercase tracking-wide mb-2">บันทึก / พูดคุย</div>
+    <div id="claimCommentsList" class="space-y-2 max-h-40 overflow-y-auto mb-2.5">
+      ${comments.map(c=>`<div class="text-sm ${c.is_admin?'bg-rose-50':'bg-ink-50'} rounded-xl px-3 py-2"><div class="text-[11px] font-semibold ${c.is_admin?'text-rose-700':'text-ink-500'} mb-0.5">${c.is_admin?'ทีมงาน':esc(c.author_name||'ลูกค้า')}</div>${esc(c.message)}</div>`).join("") || `<div class="text-xs text-ink-400 text-center py-2">ยังไม่มีข้อความ</div>`}
+    </div>
+    <div class="flex gap-2">
+      <input id="claimCommentInput" placeholder="พิมพ์ข้อความ…" class="flex-1 border border-ink-200 rounded-xl px-3 py-2 text-sm">
+      <button onclick="sendClaimComment('${claim.id}')" class="pbtn !bg-rose-600 hover:!bg-rose-700 !text-white !px-4">ส่ง</button>
+    </div>
+  `;
+}
+async function changeClaimStatus(claimId){
+  const val = document.getElementById("claimStatusSelect").value;
+  const updated = await db.updateClaimStatus(claimId, val);
+  if(updated){
+    activeClaim = updated;
+    toast("อัปเดตสถานะเคสแล้ว","ok");
+    const idx = allClaimsCache.findIndex(c=>c.id===claimId);
+    if(idx>-1) allClaimsCache[idx] = updated;
+    renderAdminClaimsList();
+    if(activeJob) await refreshJobDetail();
+  }
+}
+async function sendClaimComment(claimId){
+  const input = document.getElementById("claimCommentInput");
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = "";
+  await db.addClaimComment({ id:pid(), claim_id:claimId, author_email:currentUser.email, author_name:currentUser.name, is_admin:isAdmin, message:msg });
+  const [photos, comments] = await Promise.all([db.listClaimPhotos(claimId), db.listClaimComments(claimId)]);
+  renderClaimDetail(activeClaim, photos, comments);
+}
+
+/* ===================== ADMIN CLAIMS TAB ===================== */
+let allClaimsCache = [];
+let adminSection = "jobs";
+let adminClaimFilter = "all";
+function switchAdminSection(section){
+  adminSection = section;
+  document.getElementById("adminJobsArea").classList.toggle("hidden", section!=="jobs");
+  document.getElementById("adminClaimsArea").classList.toggle("hidden", section!=="claims");
+  document.getElementById("tabJobsBtn").classList.toggle("admin-tab-on", section==="jobs");
+  document.getElementById("tabClaimsBtn").classList.toggle("admin-tab-on", section==="claims");
+  if(section==="claims") loadAdminClaims();
+}
+async function loadAdminClaims(){
+  allClaimsCache = await db.listAllClaims();
+  renderAdminClaimsList();
+}
+function renderAdminClaimsList(){
+  const openCount = allClaimsCache.filter(c=>c.status==="open").length;
+  const badge = document.getElementById("claimsBadge");
+  if(badge){ badge.textContent = openCount; badge.classList.toggle("hidden", openCount===0); }
+  document.getElementById("claimStOpen").textContent = allClaimsCache.filter(c=>c.status==="open").length;
+  document.getElementById("claimStProgress").textContent = allClaimsCache.filter(c=>c.status==="in_progress").length;
+  document.getElementById("claimStResolved").textContent = allClaimsCache.filter(c=>c.status==="resolved").length;
+
+  const bar = document.getElementById("adminClaimFilterBar");
+  const chips = [{key:"all",label:"ทั้งหมด"}, ...CLAIM_STATUSES];
+  bar.innerHTML = chips.map(c=>{
+    const count = c.key==="all" ? allClaimsCache.length : allClaimsCache.filter(x=>x.status===c.key).length;
+    return `<button onclick="adminClaimFilter='${c.key}';renderAdminClaimsList()" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border ${adminClaimFilter===c.key?'bg-rose-600 text-white border-rose-600':'bg-white text-ink-500 border-ink-200'}">${esc(c.label)} (${count})</button>`;
+  }).join("");
+
+  const list = document.getElementById("adminClaimsList");
+  const empty = document.getElementById("adminClaimsEmpty");
+  const rows = adminClaimFilter==="all" ? allClaimsCache : allClaimsCache.filter(c=>c.status===adminClaimFilter);
+  if(!rows.length){ list.innerHTML=""; empty.classList.remove("hidden"); return; }
+  empty.classList.add("hidden");
+  list.innerHTML = rows.map(c=>{
+    const cs = claimStatusOf(c.status);
+    return `
+    <div class="bg-white rounded-xl border border-ink-100 p-4 flex items-center gap-4 lift cursor-pointer fade-in" style="border-left:3px solid ${cs.dot}" onclick="openClaimDetail('${c.id}')">
+      <div class="w-11 h-11 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style="background:${cs.dot}1A;color:${cs.dot}">🛡️</div>
+      <div class="min-w-0 flex-1">
+        <div class="font-semibold text-ink-900 truncate">${esc(c.customer_name||c.customer_email)}</div>
+        <div class="text-xs text-ink-400 truncate">${esc(c.title)}</div>
+      </div>
+      <div class="text-right flex-shrink-0">
+        <div class="text-[11px] text-ink-400">${thDate(c.created_at?c.created_at.slice(0,10):null)}</div>
+        <span class="badge ${cs.soft} ring-1 mt-1">${esc(cs.label)}</span>
+      </div>
+    </div>`;
+  }).join("");
 }
 
 /* ===================== THEME SWITCHER ===================== */
