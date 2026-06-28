@@ -429,6 +429,32 @@ tailwind.config = {
   .admin-tab:hover{color:#475569}
   .admin-tab.admin-tab-on{color:rgb(var(--b600));border-bottom-color:rgb(var(--b600))}
   #claimsBadge{background:#f43f5e;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9999px;min-width:18px;text-align:center}
+
+  .claim-alert-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#fef2f2,#ffe4e6);border:1.5px solid #fca5a5;border-radius:16px;padding:14px 18px;margin-bottom:18px;cursor:pointer;animation:claimBannerPulse 2s ease-in-out infinite;transition:transform .15s}
+  .claim-alert-banner:hover{transform:translateY(-2px)}
+  .claim-alert-banner span:nth-child(2){color:#9f1239;font-size:14px;font-weight:500}
+  .claim-alert-banner b{color:#be123c;font-size:16px}
+  .claim-alert-pulse{font-size:22px;animation:claimBellShake 1.2s ease-in-out infinite}
+  .claim-alert-cta{font-size:13px;font-weight:700;color:#e11d48;flex-shrink:0}
+  @keyframes claimBannerPulse{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.35)}50%{box-shadow:0 0 0 8px rgba(244,63,94,0)}}
+  @keyframes claimBellShake{0%,100%{transform:rotate(0)}10%,30%{transform:rotate(-15deg)}20%,40%{transform:rotate(15deg)}50%{transform:rotate(0)}}
+  html.dark .claim-alert-banner{background:linear-gradient(135deg,rgba(244,63,94,.15),rgba(190,18,60,.1));border-color:rgba(244,63,94,.4)}
+  html.dark .claim-alert-banner span:nth-child(2){color:#fca5a5}
+
+  .confirm-cta{margin-top:14px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:14px;padding:12px 14px;animation:confirmCtaPulse 2.2s ease-in-out infinite}
+  @keyframes confirmCtaPulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.3)}50%{box-shadow:0 0 0 6px rgba(16,185,129,0)}}
+  html.dark .confirm-cta{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(5,150,105,.08));border-color:rgba(16,185,129,.4)}
+  html.dark .confirm-cta span{color:#6ee7b7 !important}
+
+  .confirm-alert-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:16px;padding:14px 18px;margin-bottom:18px;animation:claimBannerPulseGreen 2s ease-in-out infinite}
+  .confirm-alert-banner span:nth-child(2){color:#047857;font-size:14px;font-weight:500}
+  .confirm-alert-banner b{color:#047857;font-size:16px}
+  .confirm-alert-dismiss{font-size:12px;font-weight:700;color:#fff;background:#10b981;padding:6px 12px;border-radius:9999px;flex-shrink:0;cursor:pointer;transition:background .15s}
+  .confirm-alert-dismiss:hover{background:#059669}
+  @keyframes claimBannerPulseGreen{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.35)}50%{box-shadow:0 0 0 8px rgba(16,185,129,0)}}
+  html.dark .confirm-alert-banner{background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(5,150,105,.1));border-color:rgba(16,185,129,.4)}
+  html.dark .confirm-alert-banner span:nth-child(2){color:#6ee7b7}
+  html.dark .confirm-alert-banner b{color:#6ee7b7}
   html.dark .admin-tab{color:#76829c}
   html.dark .admin-tab:hover{color:#cbd5e1}
 
@@ -825,6 +851,11 @@ tailwind.config = {
     </div>
   </div>
   <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-6">
+    <div id="claimAlertBanner" class="hidden claim-alert-banner" onclick="switchAdminSection('claims')">
+      <span class="claim-alert-pulse">🔔</span>
+      <span class="flex-1">มีเคสเคลมใหม่ <b id="claimAlertCount">0</b> เคส ที่ยังไม่ได้ตรวจสอบ!</span>
+      <span class="claim-alert-cta">ดูเลย →</span>
+    </div>
     <div class="flex items-center gap-2 border-b border-ink-100 mb-6">
       <button id="tabJobsBtn" onclick="switchAdminSection('jobs')" class="admin-tab admin-tab-on">📋 งานทั้งหมด</button>
       <button id="tabClaimsBtn" onclick="switchAdminSection('claims')" class="admin-tab">🛡️ เคสเคลม <span id="claimsBadge" class="hidden">0</span></button>
@@ -832,6 +863,11 @@ tailwind.config = {
   </div>
 
   <div class="max-w-6xl mx-auto px-5 sm:px-8 py-2 pb-8" id="adminJobsArea">
+    <div id="confirmAlertBanner" class="hidden confirm-alert-banner">
+      <span class="claim-alert-pulse">🎉</span>
+      <span class="flex-1">ลูกค้ายืนยันรับมอบงานใหม่ <b id="confirmAlertCount">0</b> งาน!</span>
+      <button onclick="dismissConfirmAlert()" class="confirm-alert-dismiss">รับทราบ ✓</button>
+    </div>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8" id="adminStats">
       <div class="stat-glow-card stat-glow-slate"><div class="stat-glow-icon">📋</div><div class="text-2xl font-bold text-ink-900 num" id="stAll">—</div><div class="text-xs text-ink-400 mt-1">งานทั้งหมด</div></div>
       <div class="stat-glow-card stat-glow-indigo"><div class="stat-glow-icon">⚙️</div><div class="text-2xl font-bold text-indigo-600 num" id="stProgress">—</div><div class="text-xs text-ink-400 mt-1">กำลังดำเนินการ</div></div>
@@ -910,6 +946,17 @@ tailwind.config = {
       <button onclick="closeOv('ovClaimForm')" class="text-white/80 hover:text-white text-xl leading-none">✕</button>
     </div>
     <div class="sheet-b" id="claimFormBody"></div>
+  </div>
+</div>
+
+<!-- ===================== CONFIRM RECEIPT MODAL ===================== -->
+<div class="ov" id="ovConfirmReceipt">
+  <div class="sheet" data-modal style="max-width:420px">
+    <div class="sheet-h" style="background:linear-gradient(135deg,#10b981,#047857)">
+      <div class="font-bold text-lg">✅ ยืนยันรับมอบงาน</div>
+      <button onclick="closeOv('ovConfirmReceipt')" class="text-white/80 hover:text-white text-xl leading-none">✕</button>
+    </div>
+    <div class="sheet-b" id="confirmReceiptBody"></div>
   </div>
 </div>
 
@@ -1121,9 +1168,9 @@ const db = {
   },
   async listJobStats(){
     if(!sb) return null;
-    const { data, error } = await sb.from("jobs").select("status,total_price");
+    const { data, error } = await sb.from("public_job_stats").select("completed_count").maybeSingle();
     if(error){ console.error(error); return null; }
-    return data || [];
+    return data ? data.completed_count : 0;
   },
   async createJob(row){
     const { data, error } = await sb.from("jobs").insert(row).select().single();
@@ -1250,6 +1297,14 @@ const db = {
   async addClaimComment(row){
     const { data, error } = await sb.from("claim_comments").insert(row).select().single();
     if(error){ console.error(error); toast("ส่งข้อความไม่สำเร็จ","err"); return null; }
+    return data;
+  },
+  async confirmJobReceipt(jobId, note){
+    const { data, error } = await sb.from("jobs").update({
+      customer_confirmed_at: new Date().toISOString(),
+      customer_confirm_note: note || null
+    }).eq("id", jobId).select().single();
+    if(error){ console.error(error); toast("ยืนยันไม่สำเร็จ: "+error.message,"err"); return null; }
     return data;
   }
 };
@@ -1461,9 +1516,8 @@ function renderWarrantyPortfolioMini(){
 }
 
 async function renderHeroStats(){
-  const rows = await db.listJobStats();
-  if(!rows) return;
-  const target = rows.filter(r=>r.status==="completed").length;
+  const target = await db.listJobStats();
+  if(target==null) return;
   const el = document.getElementById("statJobsDone");
   const el2 = document.getElementById("statJobsDone2");
   if(typeof countUp === "function"){
@@ -1505,6 +1559,9 @@ function customerJobCard(j){
   const st = statusOf(j.status);
   const services = (j.services||[]).map(s=>s.label).join(" · ");
   const wi = j.status==="completed" ? warrantyInfo(j.warranty_start, j.warranty_years) : null;
+  const canClaimCard = wi && !wi.expired;
+  const canCleanCard = j.status==="completed";
+  const needsConfirm = j.status==="completed" && !j.customer_confirmed_at;
   return `
   <div class="bg-white rounded-2xl border border-ink-100 p-5 sm:p-6 lift cursor-pointer fade-in relative overflow-hidden" onclick="openJobDetail('${j.id}')">
     <i class="cert-glow-blob" style="width:120px;height:120px;background:${st.dot};top:-40px;right:-30px;opacity:.13"></i>
@@ -1516,11 +1573,24 @@ function customerJobCard(j){
       <span class="badge ${st.soft} ring-1 flex-shrink-0">${esc(st.label)}</span>
     </div>
     <div class="mt-4 relative z-10">${renderStepper(j.status)}</div>
+    ${needsConfirm ? `
+    <div class="confirm-cta relative z-10" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-sm font-semibold text-emerald-800">📦 ได้รับงานเรียบร้อยแล้วใช่ไหม?</span>
+        <button onclick="openConfirmReceipt('${j.id}')" class="pbtn !bg-emerald-600 hover:!bg-emerald-700 !text-white !text-xs !py-2 !px-4 flex-shrink-0">✅ ยืนยันรับงาน</button>
+      </div>
+    </div>` : ""}
+    ${(j.customer_confirmed_at) ? `<div class="flex items-center gap-1.5 text-xs text-emerald-600 font-medium mt-3 relative z-10">✓ ยืนยันรับมอบงานแล้ว เมื่อ ${thDate(j.customer_confirmed_at.slice(0,10))}</div>` : ""}
     ${wi ? `
     <div class="relative overflow-hidden rounded-xl p-3.5 mt-4 z-10" style="background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(245,158,11,.06))">
       <div class="flex justify-between text-xs mb-1.5"><span class="font-semibold text-emerald-700"><i class="cert-live-dot"></i>อยู่ในระยะรับประกัน</span><span class="text-emerald-600 font-medium">เหลือ ${wi.remYears.toFixed(1)} ปี</span></div>
       <div>${warrantyBarHTML(wi.pct)}</div>
       <div class="flex justify-between text-[11px] text-ink-400 mt-1"><span>เริ่ม ${thDate(wi.startISO)}</span><span>ครบกำหนด ${thDate(wi.endISO)}</span></div>
+    </div>` : ""}
+    ${(canClaimCard || canCleanCard) ? `
+    <div class="flex gap-2 mt-3 relative z-10" onclick="event.stopPropagation()">
+      ${canClaimCard ? `<button onclick="openClaimForm('${j.id}')" class="flex-1 pbtn !bg-rose-50 !text-rose-600 hover:!bg-rose-100 !text-xs !py-2.5">🛡️ แจ้งเครม</button>` : ""}
+      ${canCleanCard ? `<button onclick="openNewJobForm(false,'panel_cleaning')" class="flex-1 pbtn !bg-cyan-50 !text-cyan-700 hover:!bg-cyan-100 !text-xs !py-2.5">🧼 จองล้างแผง</button>` : ""}
     </div>` : ""}
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-ink-50 relative z-10">
       <div class="font-bold text-ink-900">${baht(j.total_price)}</div>
@@ -1554,7 +1624,28 @@ async function loadAdminJobs(){
   }
   renderAdminFilterBar();
   renderAdminJobsList();
+  renderConfirmAlertBanner();
 }
+function renderConfirmAlertBanner(){
+  const banner = document.getElementById("confirmAlertBanner");
+  if(!banner) return;
+  let seenIds = [];
+  try{ seenIds = JSON.parse(localStorage.getItem("sf_seen_confirms")||"[]"); }catch(e){}
+  const confirmedJobs = adminJobsCache.filter(j=>j.customer_confirmed_at);
+  const newOnes = confirmedJobs.filter(j=>!seenIds.includes(j.id));
+  if(newOnes.length){
+    document.getElementById("confirmAlertCount").textContent = newOnes.length;
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+function dismissConfirmAlert(){
+  const confirmedIds = adminJobsCache.filter(j=>j.customer_confirmed_at).map(j=>j.id);
+  try{ localStorage.setItem("sf_seen_confirms", JSON.stringify(confirmedIds)); }catch(e){}
+  document.getElementById("confirmAlertBanner").classList.add("hidden");
+}
+
 function renderAdminFilterBar(){
   const bar = document.getElementById("adminFilterBar");
   const counts = {all: adminJobsCache.length};
@@ -1584,6 +1675,7 @@ function renderAdminJobsList(){
       <div class="text-right flex-shrink-0">
         <div class="font-bold text-ink-900 text-sm">${baht(j.total_price)}</div>
         <span class="badge ${st.soft} ring-1 mt-1">${esc(st.label)}</span>
+        ${j.customer_confirmed_at ? `<div class="text-[10px] text-emerald-600 font-semibold mt-1">✓ ลูกค้ายืนยันแล้ว</div>` : ""}
       </div>
     </div>`;
   }).join("");
@@ -1634,6 +1726,17 @@ function renderJobDetail(job, photos, slips, comments, claims){
     </div>`;
 
   const stepperBlock = `<div class="mb-5">${renderStepper(job.status)}</div>`;
+
+  const confirmBlock = (!isAdmin && job.status==="completed" && !job.customer_confirmed_at) ? `
+    <div class="confirm-cta mb-5">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-sm font-semibold text-emerald-800">📦 ได้รับงานเรียบร้อยแล้วใช่ไหม?</span>
+        <button onclick="openConfirmReceipt('${job.id}')" class="pbtn !bg-emerald-600 hover:!bg-emerald-700 !text-white !text-xs !py-2 !px-4 flex-shrink-0">✅ ยืนยันรับงาน</button>
+      </div>
+    </div>` : (job.customer_confirmed_at ? `
+    <div class="flex items-center gap-2 text-sm text-emerald-700 font-medium bg-emerald-50 rounded-xl px-3.5 py-2.5 mb-5">
+      <span>✓</span><span>ลูกค้ายืนยันรับมอบงานแล้ว เมื่อ ${thDate(job.customer_confirmed_at.slice(0,10))}</span>
+    </div>${job.customer_confirm_note ? `<div class="bg-ink-50 rounded-xl p-3 text-sm text-ink-600 mb-5 italic">"${esc(job.customer_confirm_note)}"</div>` : ""}` : "");
 
   const adminStatusBlock = isAdmin ? `
     <div class="mb-5">
@@ -1742,7 +1845,7 @@ function renderJobDetail(job, photos, slips, comments, claims){
       </div>
     </div>`;
 
-  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + adminStatusBlock + warrantyDisplay + claimsBlock + photosBlock + slipsBlock + commentsBlock;
+  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + confirmBlock + adminStatusBlock + warrantyDisplay + claimsBlock + photosBlock + slipsBlock + commentsBlock;
 }
 
 async function refreshJobDetail(){
@@ -1843,7 +1946,7 @@ async function sendComment(){
 }
 
 /* ===================== NEW JOB FORM ===================== */
-function openNewJobForm(asAdmin){
+function openNewJobForm(asAdmin, preselectKey){
   const adminMode = !!asAdmin && isAdmin;
   document.getElementById("newJobBody").innerHTML = `
     ${adminMode ? `
@@ -1865,7 +1968,7 @@ function openNewJobForm(asAdmin){
     <div id="njServices" class="space-y-2 mb-4">
       ${SERVICES.map(s=>`
         <label class="flex items-center gap-3 border border-ink-200 rounded-xl p-3 cursor-pointer has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50">
-          <input type="checkbox" value="${s.key}" onchange="updateNjTotal()" class="w-4 h-4 accent-current flex-shrink-0">
+          <input type="checkbox" value="${s.key}" ${preselectKey===s.key?'checked':''} onchange="updateNjTotal()" class="w-4 h-4 accent-current flex-shrink-0">
           <span class="text-xl flex-shrink-0">${s.icon}</span>
           <span class="flex-1 text-sm font-medium">${esc(s.label)}</span>
           ${s.fixed
@@ -1886,6 +1989,7 @@ function openNewJobForm(asAdmin){
     <button onclick="submitNewJob(${adminMode})" class="pbtn pbtn-primary w-full !py-3">ส่งคำขอบริการ</button>
   `;
   openOv("ovNewJob");
+  if(preselectKey) updateNjTotal();
 }
 function njCustomPrice(key){
   const input = document.querySelector(`[data-price-for="${key}"]`);
@@ -1983,6 +2087,37 @@ async function submitClaim(){
   if(activeJob && activeJob.id===activeClaimJobId) await refreshJobDetail();
 }
 
+/* ===================== ยืนยันรับมอบงาน (Customer Delivery Confirmation) ===================== */
+let activeConfirmJobId = null;
+function openConfirmReceipt(jobId){
+  activeConfirmJobId = jobId;
+  document.getElementById("confirmReceiptBody").innerHTML = `
+    <div class="text-center mb-4">
+      <div class="text-4xl mb-2">🎉</div>
+      <p class="text-sm text-ink-600 leading-relaxed">ยืนยันว่าคุณได้รับงานเรียบร้อยแล้ว และพอใจกับผลงานที่ส่งมอบ<br>การยืนยันนี้จะแจ้งไปยังทีมงานทันที</p>
+    </div>
+    <label class="text-xs text-ink-500 font-medium">ความคิดเห็นเพิ่มเติม (ถ้ามี)</label>
+    <textarea id="confirmNote" rows="3" placeholder="เช่น ทีมงานบริการดีมาก ติดตั้งเรียบร้อยตรงเวลา" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm mt-1 mb-4"></textarea>
+    <button onclick="submitConfirmReceipt()" class="pbtn !bg-emerald-600 hover:!bg-emerald-700 !text-white w-full !py-3">✅ ยืนยันรับมอบงาน</button>
+  `;
+  openOv("ovConfirmReceipt");
+}
+async function submitConfirmReceipt(){
+  const note = document.getElementById("confirmNote").value.trim();
+  const updated = await db.confirmJobReceipt(activeConfirmJobId, note);
+  if(!updated) return;
+  await db.addComment({
+    id: pid(), job_id: activeConfirmJobId, author_email: currentUser.email, author_name: currentUser.name,
+    is_admin: false, message: "✅ ลูกค้ายืนยันรับมอบงานเรียบร้อยแล้ว" + (note ? ` — "${note}"` : "")
+  });
+  syncJobInCache(updated);
+  closeOv("ovConfirmReceipt");
+  burstConfetti();
+  toast("ยืนยันรับมอบงานสำเร็จ ขอบคุณที่ใช้บริการครับ 🙏","ok");
+  if(activeJob && activeJob.id===activeConfirmJobId) await refreshJobDetail();
+  else loadCustomerJobs();
+}
+
 let activeClaim = null;
 async function openClaimDetail(claimId){
   const { data: claim, error } = await sb.from("claims").select("*").eq("id", claimId).single();
@@ -2062,6 +2197,11 @@ function renderAdminClaimsList(){
   const openCount = allClaimsCache.filter(c=>c.status==="open").length;
   const badge = document.getElementById("claimsBadge");
   if(badge){ badge.textContent = openCount; badge.classList.toggle("hidden", openCount===0); }
+  const banner = document.getElementById("claimAlertBanner");
+  if(banner){
+    banner.classList.toggle("hidden", openCount===0);
+    document.getElementById("claimAlertCount").textContent = openCount;
+  }
   document.getElementById("claimStOpen").textContent = allClaimsCache.filter(c=>c.status==="open").length;
   document.getElementById("claimStProgress").textContent = allClaimsCache.filter(c=>c.status==="in_progress").length;
   document.getElementById("claimStResolved").textContent = allClaimsCache.filter(c=>c.status==="resolved").length;
