@@ -1100,6 +1100,7 @@ if(sb){
 const SERVICES = [
   { key:"find_contractor", label:"จัดหาผู้รับเหมาโซลาร์เซลล์", price:1000, fixed:true, icon:"🤝", desc:"แนะนำและจัดหาผู้รับเหมาที่เหมาะกับงานของคุณ" },
   { key:"design",          label:"เขียนแบบโซลาร์เซลล์",        price:3500, fixed:true, icon:"📐", desc:"ออกแบบระบบพร้อมแบบสำหรับยื่นขออนุญาต" },
+  { key:"permit",          label:"ยื่นขออนุญาตติดตั้ง/ขึ้นทะเบียนการไฟฟ้า", price:null, fixed:false, icon:"📄", desc:"ดำเนินเรื่องยื่นขออนุญาตและขึ้นทะเบียนกับหน่วยงานที่เกี่ยวข้องให้ครบถ้วน" },
   { key:"install_supervise", label:"ติดตั้งและคุมงานติดตั้ง",    price:null, fixed:false, icon:"🛠️", desc:"ดูแลควบคุมงานติดตั้งให้ตรงตามแบบและมาตรฐาน" },
   { key:"labor_only",      label:"เหมาเฉพาะค่าแรงติดตั้ง",      price:null, fixed:false, icon:"⚡", desc:"รับเหมาเฉพาะค่าแรงติดตั้งระบบโซลาร์เซลล์" },
   { key:"panel_cleaning",  label:"ล้างแผงโซลาร์เซลล์",          price:null, fixed:false, icon:"🧼", desc:"ทำความสะอาดแผงโซลาร์เซลล์ เพิ่มประสิทธิภาพการผลิตไฟฟ้า" }
@@ -1426,7 +1427,7 @@ function openProfileMenu(){
 /* ===================== PUBLIC: SERVICES ===================== */
 function renderServiceCards(){
   const wrap = document.getElementById("serviceCards");
-  const glowColors = ["#fbbf24","#f59e0b","#10b981","#3b82f6","#06b6d4"];
+  const glowColors = ["#fbbf24","#f59e0b","#8b5cf6","#10b981","#3b82f6","#06b6d4"];
   wrap.innerHTML = SERVICES.map((s,i)=>`
     <div class="bg-white rounded-2xl border ${i===1?'border-amber-300 ring-2 ring-amber-200':'border-ink-100'} p-6 pt-7 lift ${i===1?'sheen':''} relative overflow-hidden">
       <i class="cert-glow-blob" style="width:90px;height:90px;background:${glowColors[i]};top:-30px;right:-25px;animation-duration:${8+i}s"></i>
