@@ -456,6 +456,11 @@ tailwind.config = {
   html.dark .confirm-alert-banner{background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(5,150,105,.1));border-color:rgba(16,185,129,.4)}
   html.dark .confirm-alert-banner span:nth-child(2){color:#6ee7b7}
   html.dark .confirm-alert-banner b{color:#6ee7b7}
+
+  .cust-claim-alert-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#fef2f2,#ffe4e6);border:1.5px solid #fca5a5;border-radius:16px;padding:14px 18px;margin-bottom:20px;animation:claimBannerPulse 2s ease-in-out infinite;cursor:pointer}
+  .cust-claim-alert-banner span:nth-child(2){color:#9f1239;font-size:14px;font-weight:600}
+  html.dark .cust-claim-alert-banner{background:linear-gradient(135deg,rgba(244,63,94,.15),rgba(190,18,60,.1));border-color:rgba(244,63,94,.4)}
+  html.dark .cust-claim-alert-banner span:nth-child(2){color:#fca5a5}
   html.dark .admin-tab{color:#76829c}
   html.dark .admin-tab:hover{color:#cbd5e1}
 
@@ -828,6 +833,11 @@ tailwind.config = {
     </div>
   </div>
   <div class="max-w-5xl mx-auto px-5 sm:px-8 py-10">
+    <div id="custClaimAlertBanner" class="hidden cust-claim-alert-banner">
+      <span class="claim-alert-pulse">🛡️</span>
+      <span class="flex-1" id="custClaimAlertText">เคสเคลมของคุณมีความคืบหน้าใหม่</span>
+      <button onclick="dismissCustClaimAlert()" class="confirm-alert-dismiss" style="background:#e11d48">ดูเลย →</button>
+    </div>
     <div id="custJobsList" class="space-y-5"></div>
     <div id="custJobsEmpty" class="hidden text-center py-16">
       <div class="text-5xl mb-3">☀️</div>
@@ -1274,6 +1284,12 @@ const db = {
     if(error){ console.error(error); return []; }
     return data || [];
   },
+  async listMyClaims(){
+    if(!sb || !currentUser) return [];
+    const { data, error } = await sb.from("claims").select("*").eq("customer_email", currentUser.email).order("updated_at",{ascending:false});
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
   async createClaim(row){
     const { data, error } = await sb.from("claims").insert(row).select().single();
     if(error){ console.error(error); toast("ส่งเคสเคลมไม่สำเร็จ: "+error.message,"err"); return null; }
@@ -1568,6 +1584,7 @@ async function loadCustomerJobs(){
   loading.classList.remove("hidden"); list.innerHTML=""; empty.classList.add("hidden");
   custJobsCache = await db.listJobs();
   loading.classList.add("hidden");
+  checkCustomerClaimUpdates();
   if(!custJobsCache.length){ empty.classList.remove("hidden"); return; }
   list.innerHTML = custJobsCache.map(j=>customerJobCard(j)).join("");
 }
@@ -2131,6 +2148,33 @@ async function submitNewJob(adminMode){
 /* ===================== WARRANTY CLAIM (เคสเคลม) ===================== */
 let claimPendingPhotos = [];
 let activeClaimJobId = null;
+let myClaimsCache = [];
+async function checkCustomerClaimUpdates(){
+  if(isAdmin || !currentUser) return;
+  myClaimsCache = await db.listMyClaims();
+  const banner = document.getElementById("custClaimAlertBanner");
+  if(!banner || !myClaimsCache.length) return;
+  let seen = {};
+  try{ seen = JSON.parse(localStorage.getItem("sf_seen_claim_updates")||"{}"); }catch(e){}
+  const newUpdates = myClaimsCache.filter(c => seen[c.id] !== c.status);
+  if(newUpdates.length){
+    const text = document.getElementById("custClaimAlertText");
+    text.textContent = newUpdates.length===1
+      ? `🛡️ เคสเคลม "${newUpdates[0].title}" มีความคืบหน้าใหม่: ${claimStatusOf(newUpdates[0].status).label}`
+      : `🛡️ มีเคสเคลม ${newUpdates.length} เคส ที่มีความคืบหน้าใหม่`;
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+function dismissCustClaimAlert(){
+  let seen = {};
+  try{ seen = JSON.parse(localStorage.getItem("sf_seen_claim_updates")||"{}"); }catch(e){}
+  myClaimsCache.forEach(c=>{ seen[c.id] = c.status; });
+  try{ localStorage.setItem("sf_seen_claim_updates", JSON.stringify(seen)); }catch(e){}
+  document.getElementById("custClaimAlertBanner").classList.add("hidden");
+  if(myClaimsCache.length===1) openClaimDetail(myClaimsCache[0].id);
+}
 function openClaimForm(jobId){
   activeClaimJobId = jobId;
   claimPendingPhotos = [];
