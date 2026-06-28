@@ -1043,7 +1043,7 @@ const db = {
   async listJobs(){
     if(!sb) return [];
     let q = sb.from("jobs").select("*").order("created_at",{ascending:false});
-    if(!isAdmin) q = q.eq("customer_email", currentUser.email);
+    if(!isAdmin) q = q.eq("customer_email", (currentUser.email||"").toLowerCase());
     const { data, error } = await q;
     if(error){ console.error(error); toast("โหลดข้อมูลงานไม่สำเร็จ","err"); return []; }
     return data || [];
@@ -1158,7 +1158,7 @@ async function onAuthed(u){
   if(currentUser && currentUser.id === u.id) return; // กันเรียกซ้ำถ้า listener กับ getSession ตรวจพบ session พร้อมกันทั้งคู่
   currentUser = {
     id: u.id,
-    email: u.email,
+    email: (u.email||"").toLowerCase(),
     name: (u.user_metadata && (u.user_metadata.full_name||u.user_metadata.name)) || u.email,
     avatar: u.user_metadata && u.user_metadata.avatar_url
   };
@@ -1767,6 +1767,7 @@ async function submitNewJob(adminMode){
     email = document.getElementById("njEmail").value.trim();
     if(!email || !email.includes("@")){ toast("กรอกอีเมลลูกค้าให้ถูกต้อง","err"); return; }
   }
+  email = email.toLowerCase();
   if(!name || !phone){ toast("กรอกชื่อและเบอร์โทรให้ครบ","err"); return; }
   if(!checked.length){ toast("เลือกบริการอย่างน้อย 1 รายการ","err"); return; }
   const services = checked.map(k=>{ const s=serviceOf(k); return { key:s.key, label:s.label, price:s.price }; });
