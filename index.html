@@ -253,6 +253,24 @@ tailwind.config = {
   .progress-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:barShimmer 2.4s ease-in-out infinite}
   @keyframes barShimmer{to{transform:translateX(220%)}}
 
+  /* ============================================================
+     =============== WARRANTY ENERGY BAR (ขั้นสูงสุด) =============
+     ============================================================ */
+  .warranty-bar{height:11px;border-radius:9999px;background:#eef1f6;position:relative;overflow:visible}
+  .warranty-bar-fill{height:100%;border-radius:9999px;position:relative;overflow:hidden;
+    background:linear-gradient(90deg,#fbbf24,#f97316,#34d399,#fbbf24);
+    background-size:300% 100%;
+    animation:warrantyFlow 3s linear infinite;
+    transition:width 1.1s cubic-bezier(.16,.8,.24,1);
+    box-shadow:0 0 16px rgba(245,158,11,.55),0 0 3px rgba(16,185,129,.5)}
+  @keyframes warrantyFlow{to{background-position:-300% 0}}
+  .warranty-bar-sweep{position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.7) 50%,transparent 70%);background-size:220% 100%;animation:warrantySweep 1.7s ease-in-out infinite}
+  @keyframes warrantySweep{0%{background-position:160% 0}100%{background-position:-60% 0}}
+  .warranty-bar-head{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.5),0 0 18px 5px rgba(245,158,11,.9);transform:translate(-50%,-50%);animation:warrantyHeadPulse 1.1s ease-in-out infinite;transition:left 1.1s cubic-bezier(.16,.8,.24,1);z-index:2}
+  @keyframes warrantyHeadPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.45)}}
+  .warranty-bar-spark{position:absolute;width:4px;height:4px;border-radius:50%;background:#fde68a;animation:sparkTwinkle 1.5s ease-in-out infinite;transition:left 1.1s cubic-bezier(.16,.8,.24,1);z-index:1}
+  html.dark .warranty-bar{background:#222a3d}
+
   /* ---- view transition ---- */
   .view.active{animation:viewIn .5s cubic-bezier(.16,.8,.24,1) both}
   @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -992,6 +1010,17 @@ function warrantyInfo(startISO, years){
   const expired = now > end;
   return { startISO, endISO: end.toISOString().slice(0,10), pct, remYears, expired };
 }
+function warrantyBarHTML(pct){
+  pct = Math.max(0, Math.min(100, Number(pct)||0));
+  return `
+    <div class="warranty-bar">
+      <div class="warranty-bar-fill" style="width:${pct}%"><i class="warranty-bar-sweep"></i></div>
+      <i class="warranty-bar-head" style="left:${pct}%"></i>
+      <i class="warranty-bar-spark" style="left:calc(${pct}% - 6px);top:-6px;animation-delay:0s"></i>
+      <i class="warranty-bar-spark" style="left:calc(${pct}% + 4px);top:7px;animation-delay:.45s"></i>
+      <i class="warranty-bar-spark" style="left:calc(${pct}% - 2px);top:-1px;animation-delay:.9s"></i>
+    </div>`;
+}
 
 function toast(msg, type){
   const wrap = document.getElementById("toastWrap");
@@ -1292,7 +1321,7 @@ function certItemHTML(item){
       </div>
       <span class="badge ${wi.expired?'bg-ink-100 text-ink-500':'bg-emerald-50 text-emerald-700'} flex-shrink-0">${wi.expired?'ครบกำหนดแล้ว':'<i class="cert-live-dot"></i>ใช้งานอยู่'}</span>
     </div>
-    <div class="progress-track mb-2 mt-3"><div class="progress-fill bg-gradient-to-r from-amber-400 via-orange-400 to-emerald-500" style="width:${wi.pct}%"></div></div>
+    <div class="mb-2 mt-3">${warrantyBarHTML(wi.pct)}</div>
     <div class="flex justify-between text-xs text-ink-400 mb-1">
       <span>เริ่ม ${thDate(wi.startISO)}</span>
       <span>ครบกำหนด ${thDate(wi.endISO)}</span>
@@ -1389,7 +1418,7 @@ function customerJobCard(j){
     ${wi ? `
     <div class="relative overflow-hidden rounded-xl p-3.5 mt-4 z-10" style="background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(245,158,11,.06))">
       <div class="flex justify-between text-xs mb-1.5"><span class="font-semibold text-emerald-700"><i class="cert-live-dot"></i>อยู่ในระยะรับประกัน</span><span class="text-emerald-600 font-medium">เหลือ ${wi.remYears.toFixed(1)} ปี</span></div>
-      <div class="progress-track"><div class="progress-fill bg-gradient-to-r from-amber-400 via-orange-400 to-emerald-500" style="width:${wi.pct}%;box-shadow:0 0 10px rgba(16,185,129,.4)"></div></div>
+      <div>${warrantyBarHTML(wi.pct)}</div>
       <div class="flex justify-between text-[11px] text-ink-400 mt-1"><span>เริ่ม ${thDate(wi.startISO)}</span><span>ครบกำหนด ${thDate(wi.endISO)}</span></div>
     </div>` : ""}
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-ink-50 relative z-10">
@@ -1520,7 +1549,7 @@ function renderJobDetail(job, photos, slips, comments){
   const warrantyDisplay = (!isAdmin && wi) ? `
     <div class="bg-emerald-50 rounded-xl p-4 mb-5">
       <div class="flex justify-between text-sm mb-2"><span class="font-semibold text-emerald-700">🛡️ อยู่ในระยะรับประกัน</span><span class="text-emerald-600 font-medium">${wi.remYears.toFixed(1)} ปีที่เหลือ</span></div>
-      <div class="progress-track"><div class="progress-fill bg-emerald-500" style="width:${wi.pct}%"></div></div>
+      <div>${warrantyBarHTML(wi.pct)}</div>
       <div class="flex justify-between text-xs text-ink-400 mt-1.5"><span>เริ่ม ${thDate(wi.startISO)}</span><span>ครบกำหนด ${thDate(wi.endISO)}</span></div>
     </div>` : "";
 
