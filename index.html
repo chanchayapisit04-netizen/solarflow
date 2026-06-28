@@ -890,6 +890,7 @@ tailwind.config = {
     <div class="flex items-center gap-2 border-b border-ink-100 mb-6">
       <button id="tabJobsBtn" onclick="switchAdminSection('jobs')" class="admin-tab admin-tab-on">📋 งานทั้งหมด</button>
       <button id="tabClaimsBtn" onclick="switchAdminSection('claims')" class="admin-tab">🛡️ เคสเคลม <span id="claimsBadge" class="hidden">0</span></button>
+      <button id="tabPortfolioBtn" onclick="switchAdminSection('portfolio')" class="admin-tab">🖼️ ผลงาน</button>
     </div>
   </div>
 
@@ -922,6 +923,16 @@ tailwind.config = {
     <div class="flex items-center gap-2 mb-5 overflow-x-auto pb-1" id="adminClaimFilterBar"></div>
     <div id="adminClaimsList" class="space-y-3"></div>
     <div id="adminClaimsEmpty" class="hidden text-center py-16 text-ink-400">ยังไม่มีเคสเคลมในหมวดนี้</div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-2 pb-8 hidden" id="adminPortfolioArea">
+    <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+      <p class="text-sm text-ink-500 max-w-md">รูปภาพทั้งหมดที่อยู่ในส่วน "ผลงานของเรา" บนหน้าแรก (สาธารณะ ไม่ต้องล็อกอินก็เห็น) — เพิ่ม/ลบได้ตามต้องการ</p>
+      <label class="pbtn pbtn-primary !px-4 !py-2.5 cursor-pointer flex-shrink-0">+ เพิ่มรูปผลงาน<input type="file" accept="image/*" multiple class="hidden" onchange="uploadPortfolioPhotos(event)"></label>
+    </div>
+    <div id="portfolioUploadProgress" class="hidden text-xs text-ink-400 mb-3">กำลังอัปโหลด…</div>
+    <div id="adminPortfolioGrid" class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div>
+    <div id="adminPortfolioEmpty" class="hidden text-center py-16 text-ink-400">ยังไม่มีรูปผลงานที่อัปโหลดเอง — หน้าแรกจะใช้รูปตัวอย่างแสดงแทนไปก่อน</div>
   </div>
 </div>
 
@@ -1308,6 +1319,26 @@ const db = {
     if(error){ console.error(error); return []; }
     return data || [];
   },
+  async listPortfolioPhotos(){
+    if(!sb) return [];
+    const { data, error } = await sb.from("portfolio_photos").select("*").order("created_at",{ascending:false});
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
+  async addPortfolioPhoto(row){
+    const { error } = await sb.from("portfolio_photos").insert(row);
+    if(error){ console.error(error); toast("เพิ่มรูปไม่สำเร็จ: "+error.message,"err"); return false; }
+    return true;
+  },
+  async deletePortfolioPhoto(id, url){
+    try{
+      const path = url.split("/job-photos/")[1];
+      if(path) await sb.storage.from("job-photos").remove([path]);
+    }catch(e){}
+    const { error } = await sb.from("portfolio_photos").delete().eq("id", id);
+    if(error){ toast("ลบรูปไม่สำเร็จ","err"); return false; }
+    return true;
+  },
   async createClaim(row){
     const { data, error } = await sb.from("claims").insert(row).select().single();
     if(error){ console.error(error); toast("ส่งเคสเคลมไม่สำเร็จ: "+error.message,"err"); return null; }
@@ -1455,9 +1486,11 @@ const DEMO_PORTFOLIO = [
 async function renderPortfolio(){
   const grid = document.getElementById("portfolioGrid");
   const empty = document.getElementById("portfolioEmpty");
-  let photos = [];
-  try{ photos = await db.listPublicPhotos(); }catch(e){ photos = []; }
-  const combined = [...DEMO_PORTFOLIO, ...(photos||[])];
+  let standalone = [], jobPhotos = [];
+  try{ [standalone, jobPhotos] = await Promise.all([db.listPortfolioPhotos(), db.listPublicPhotos()]); }catch(e){ standalone=[]; jobPhotos=[]; }
+  const real = [...(standalone||[]), ...(jobPhotos||[])];
+  // เติมรูปตัวอย่างเฉพาะเมื่อรูปจริงยังมีน้อย พอมีรูปจริงเยอะพอ (4 รูปขึ้นไป) จะไม่โชว์รูปตัวอย่างอีก
+  const combined = real.length >= 4 ? real : [...real, ...DEMO_PORTFOLIO.slice(0, 8 - real.length)];
   if(!combined.length){ grid.innerHTML=""; empty.classList.remove("hidden"); return; }
   empty.classList.add("hidden");
   grid.innerHTML = combined.map(p=>`
@@ -1744,6 +1777,49 @@ async function exportAllToExcel(){
   XLSX.utils.book_append_sheet(wb, ws2, "เคสเคลม");
   XLSX.writeFile(wb, `อภิศิริโซลาร์เซลล์_ข้อมูล_${todayISO()}.xlsx`);
   toast("ดาวน์โหลดไฟล์ Excel สำเร็จ","ok");
+}
+
+/* ===================== ADMIN: จัดการรูปผลงาน (Portfolio) ===================== */
+let portfolioPhotosCache = [];
+async function loadAdminPortfolio(){
+  portfolioPhotosCache = await db.listPortfolioPhotos();
+  renderAdminPortfolioGrid();
+}
+function renderAdminPortfolioGrid(){
+  const grid = document.getElementById("adminPortfolioGrid");
+  const empty = document.getElementById("adminPortfolioEmpty");
+  if(!portfolioPhotosCache.length){ grid.innerHTML=""; empty.classList.remove("hidden"); return; }
+  empty.classList.add("hidden");
+  grid.innerHTML = portfolioPhotosCache.map(p=>`
+    <div class="relative group">
+      <img src="${esc(p.url)}" class="cursor-pointer" onclick="showLightbox('${esc(p.url)}')">
+      <button onclick="event.stopPropagation();removePortfolioPhoto('${p.id}','${esc(p.url)}')" class="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/55 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+    </div>
+  `).join("");
+}
+async function uploadPortfolioPhotos(e){
+  const files = Array.from(e.target.files||[]);
+  if(!files.length) return;
+  const prog = document.getElementById("portfolioUploadProgress");
+  prog.classList.remove("hidden"); prog.textContent = `กำลังอัปโหลด 0/${files.length}…`;
+  let done = 0;
+  for(const f of files){
+    const url = await db.uploadFile("job-photos", f);
+    if(url) await db.addPortfolioPhoto({ id:pid(), url });
+    done++; prog.textContent = `กำลังอัปโหลด ${done}/${files.length}…`;
+  }
+  prog.classList.add("hidden");
+  toast("เพิ่มรูปผลงานสำเร็จ","ok");
+  await loadAdminPortfolio();
+  renderPortfolio();
+}
+async function removePortfolioPhoto(id, url){
+  if(!confirm("ลบรูปนี้จากผลงาน?")) return;
+  if(await db.deletePortfolioPhoto(id, url)){
+    toast("ลบรูปแล้ว","ok");
+    await loadAdminPortfolio();
+    renderPortfolio();
+  }
 }
 
 function renderAdminFilterBar(){
@@ -2375,9 +2451,12 @@ function switchAdminSection(section){
   adminSection = section;
   document.getElementById("adminJobsArea").classList.toggle("hidden", section!=="jobs");
   document.getElementById("adminClaimsArea").classList.toggle("hidden", section!=="claims");
+  document.getElementById("adminPortfolioArea").classList.toggle("hidden", section!=="portfolio");
   document.getElementById("tabJobsBtn").classList.toggle("admin-tab-on", section==="jobs");
   document.getElementById("tabClaimsBtn").classList.toggle("admin-tab-on", section==="claims");
+  document.getElementById("tabPortfolioBtn").classList.toggle("admin-tab-on", section==="portfolio");
   if(section==="claims") loadAdminClaims();
+  if(section==="portfolio") loadAdminPortfolio();
 }
 async function loadAdminClaims(){
   allClaimsCache = await db.listAllClaims();
