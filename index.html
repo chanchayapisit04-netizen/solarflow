@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 tailwind.config = {
   darkMode: 'class',
@@ -847,7 +848,10 @@ tailwind.config = {
         <div class="text-amber-400 text-xs font-semibold uppercase tracking-wider">แดชบอร์ดแอดมิน</div>
         <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">ภาพรวมงานทั้งหมด</h1>
       </div>
-      <button onclick="openNewJobForm(true)" class="pbtn pbtn-primary !px-5 !py-3">+ สร้างงานให้ลูกค้า</button>
+      <div class="flex gap-2 flex-wrap">
+        <button onclick="exportAllToExcel()" class="pbtn pbtn-ghost !px-5 !py-3">📥 Export Excel</button>
+        <button onclick="openNewJobForm(true)" class="pbtn pbtn-primary !px-5 !py-3">+ สร้างงานให้ลูกค้า</button>
+      </div>
     </div>
   </div>
   <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-6">
@@ -1095,6 +1099,7 @@ const CLAIM_STATUSES = [
   { key:"rejected",    label:"ไม่อยู่ในเงื่อนไข", soft:"bg-ink-100 text-ink-500 ring-ink-200",        dot:"#94a3b8" }
 ];
 const claimStatusOf = (k) => CLAIM_STATUSES.find(s=>s.key===k) || CLAIM_STATUSES[0];
+const CLAIM_FLOW = ["open","in_progress","resolved"];
 
 /* ===================== HELPERS ===================== */
 const fmt = (n) => (Number(n)||0).toLocaleString("th-TH");
@@ -1541,6 +1546,17 @@ function renderStepper(status){
     return `<div class="step ${cls}"><div class="line"></div><div class="dot">${i<idx?'✓':(i+1)}</div><div class="lbl">${esc(s.label)}</div></div>`;
   }).join("") + `</div>`;
 }
+function renderClaimStepper(status){
+  if(status==="rejected"){
+    return `<div class="stepper"><div class="step cancelled current"><div class="line"></div><div class="dot">✕</div><div class="lbl">ไม่อยู่ในเงื่อนไข</div></div></div>`;
+  }
+  const idx = CLAIM_FLOW.indexOf(status);
+  return `<div class="stepper">` + CLAIM_FLOW.map((k,i)=>{
+    const cls = i<idx ? "done" : (i===idx ? "current" : "");
+    const s = claimStatusOf(k);
+    return `<div class="step ${cls}"><div class="line"></div><div class="dot">${i<idx?'✓':(i+1)}</div><div class="lbl">${esc(s.label)}</div></div>`;
+  }).join("") + `</div>`;
+}
 
 /* ===================== CUSTOMER DASHBOARD ===================== */
 let custJobsCache = [];
@@ -1559,6 +1575,7 @@ function customerJobCard(j){
   const st = statusOf(j.status);
   const services = (j.services||[]).map(s=>s.label).join(" · ");
   const wi = j.status==="completed" ? warrantyInfo(j.warranty_start, j.warranty_years) : null;
+  const isCleaningCard = (j.services||[]).length===1 && j.services[0].key==="panel_cleaning";
   const canClaimCard = wi && !wi.expired;
   const canCleanCard = j.status==="completed";
   const needsConfirm = j.status==="completed" && !j.customer_confirmed_at;
@@ -1572,6 +1589,7 @@ function customerJobCard(j){
       </div>
       <span class="badge ${st.soft} ring-1 flex-shrink-0">${esc(st.label)}</span>
     </div>
+    ${(isCleaningCard && j.appointment_date) ? `<div class="flex items-center gap-1.5 text-xs text-cyan-700 font-medium bg-cyan-50 rounded-lg px-2.5 py-1.5 mt-2 relative z-10 w-fit">📅 นัดเข้าหน้างาน ${thDate(j.appointment_date)}</div>` : ""}
     <div class="mt-4 relative z-10">${renderStepper(j.status)}</div>
     ${needsConfirm ? `
     <div class="confirm-cta relative z-10" onclick="event.stopPropagation()">
@@ -1581,7 +1599,7 @@ function customerJobCard(j){
       </div>
     </div>` : ""}
     ${(j.customer_confirmed_at) ? `<div class="flex items-center gap-1.5 text-xs text-emerald-600 font-medium mt-3 relative z-10">✓ ยืนยันรับมอบงานแล้ว เมื่อ ${thDate(j.customer_confirmed_at.slice(0,10))}</div>` : ""}
-    ${wi ? `
+    ${(wi && !isCleaningCard) ? `
     <div class="relative overflow-hidden rounded-xl p-3.5 mt-4 z-10" style="background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(245,158,11,.06))">
       <div class="flex justify-between text-xs mb-1.5"><span class="font-semibold text-emerald-700"><i class="cert-live-dot"></i>อยู่ในระยะรับประกัน</span><span class="text-emerald-600 font-medium">เหลือ ${wi.remYears.toFixed(1)} ปี</span></div>
       <div>${warrantyBarHTML(wi.pct)}</div>
@@ -1644,6 +1662,53 @@ function dismissConfirmAlert(){
   const confirmedIds = adminJobsCache.filter(j=>j.customer_confirmed_at).map(j=>j.id);
   try{ localStorage.setItem("sf_seen_confirms", JSON.stringify(confirmedIds)); }catch(e){}
   document.getElementById("confirmAlertBanner").classList.add("hidden");
+}
+
+/* ===================== EXPORT EXCEL (แอดมิน) ===================== */
+async function exportAllToExcel(){
+  if(typeof XLSX === "undefined"){ toast("โหลดไลบรารี Excel ไม่สำเร็จ ลองรีเฟรชหน้าใหม่อีกครั้ง","err"); return; }
+  toast("กำลังเตรียมไฟล์ Excel…");
+  let jobs = [], claims = [];
+  try{
+    [jobs, claims] = await Promise.all([db.listJobs(), db.listAllClaims()]);
+  }catch(e){ console.error(e); toast("ดึงข้อมูลไม่สำเร็จ","err"); return; }
+
+  const jobsData = jobs.map(j=>({
+    "เลขงาน": j.id,
+    "ชื่อลูกค้า": j.customer_name||"",
+    "อีเมล": j.customer_email||"",
+    "เบอร์โทร": j.customer_phone||"",
+    "จังหวัด": j.province||"",
+    "ที่อยู่": j.address||"",
+    "บริการ": (j.services||[]).map(s=>s.label).join(", "),
+    "ราคารวม (บาท)": Number(j.total_price)||0,
+    "สถานะ": statusOf(j.status).label,
+    "วันที่สร้าง": j.created_at ? j.created_at.slice(0,10) : "",
+    "วันนัดเข้าหน้างาน": j.appointment_date || "",
+    "วันส่งมอบงาน": j.warranty_start || "",
+    "ระยะรับประกัน (ปี)": j.warranty_years || "",
+    "ลูกค้ายืนยันรับงาน": j.customer_confirmed_at ? `ยืนยันแล้ว (${j.customer_confirmed_at.slice(0,10)})` : "ยังไม่ยืนยัน",
+    "หมายเหตุ": j.note || ""
+  }));
+
+  const claimsData = claims.map(c=>({
+    "รหัสเคส": c.id,
+    "ลูกค้า": c.customer_name||"",
+    "อีเมล": c.customer_email||"",
+    "เลขงานที่เกี่ยวข้อง": c.job_id||"",
+    "หัวข้อ": c.title,
+    "รายละเอียด": c.description,
+    "สถานะ": claimStatusOf(c.status).label,
+    "วันที่แจ้ง": c.created_at ? c.created_at.slice(0,10) : ""
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.json_to_sheet(jobsData.length ? jobsData : [{"ไม่มีข้อมูล":""}]);
+  const ws2 = XLSX.utils.json_to_sheet(claimsData.length ? claimsData : [{"ไม่มีข้อมูล":""}]);
+  XLSX.utils.book_append_sheet(wb, ws1, "งานทั้งหมด");
+  XLSX.utils.book_append_sheet(wb, ws2, "เคสเคลม");
+  XLSX.writeFile(wb, `อภิศิริโซลาร์เซลล์_ข้อมูล_${todayISO()}.xlsx`);
+  toast("ดาวน์โหลดไฟล์ Excel สำเร็จ","ok");
 }
 
 function renderAdminFilterBar(){
@@ -1738,12 +1803,24 @@ function renderJobDetail(job, photos, slips, comments, claims){
       <span>✓</span><span>ลูกค้ายืนยันรับมอบงานแล้ว เมื่อ ${thDate(job.customer_confirmed_at.slice(0,10))}</span>
     </div>${job.customer_confirm_note ? `<div class="bg-ink-50 rounded-xl p-3 text-sm text-ink-600 mb-5 italic">"${esc(job.customer_confirm_note)}"</div>` : ""}` : "");
 
+  const isCleaningJob = (job.services||[]).length===1 && job.services[0].key==="panel_cleaning";
+
+  const appointmentDisplay = (isCleaningJob && job.appointment_date) ? `
+    <div class="flex items-center gap-2 text-sm text-cyan-700 font-medium bg-cyan-50 rounded-xl px-3.5 py-2.5 mb-5">
+      <span>📅</span><span>นัดเข้าหน้างานวันที่ ${thDate(job.appointment_date)}</span>
+    </div>` : "";
+
   const adminStatusBlock = isAdmin ? `
     <div class="mb-5">
       <div class="text-xs font-semibold text-ink-400 uppercase tracking-wide mb-2">เปลี่ยนสถานะ</div>
       <select id="statusSelect" onchange="changeJobStatus()" class="w-full border border-ink-200 rounded-xl px-3 py-2.5 text-sm bg-white">
         ${STATUSES.map(s=>`<option value="${s.key}" ${s.key===job.status?'selected':''}>${esc(s.label)}</option>`).join("")}
       </select>
+      ${isCleaningJob ? `
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <div class="col-span-2"><label class="text-xs text-ink-400">📅 วันนัดเข้าหน้างาน</label><input type="date" id="appointmentDateInput" value="${job.appointment_date||''}" class="w-full border border-ink-200 rounded-lg px-2 py-1.5 text-sm mt-1"></div>
+        <button onclick="saveAppointment()" class="pbtn pbtn-primary !text-xs !py-2 col-span-2 mt-1">บันทึกวันนัด</button>
+      </div>` : `
       <div id="warrantyFields" class="grid grid-cols-2 gap-2 mt-3 ${job.status==='completed'?'':'hidden'}">
         <div><label class="text-xs text-ink-400">วันส่งมอบงาน</label><input type="date" id="warrantyStartInput" value="${job.warranty_start||todayISO()}" class="w-full border border-ink-200 rounded-lg px-2 py-1.5 text-sm mt-1"></div>
         <div><label class="text-xs text-ink-400">ระยะรับประกัน (ปี)</label><select id="warrantyYearsInput" class="w-full border border-ink-200 rounded-lg px-2 py-1.5 text-sm mt-1">${[1,2,3,4,5,6,7,8,9,10].map(y=>`<option value="${y}" ${Number(job.warranty_years)===y?'selected':''}>${y} ปี</option>`).join("")}</select></div>
@@ -1752,10 +1829,10 @@ function renderJobDetail(job, photos, slips, comments, claims){
           <input type="checkbox" id="publicShowcaseToggle" ${job.is_public_showcase?'checked':''} onchange="togglePublicShowcase(this.checked)" class="w-4 h-4 accent-amber-600">
           <span class="text-xs text-amber-800">🌟 แสดงงานนี้ในหน้า "ใบรับประกัน" สาธารณะ (ชื่อลูกค้าจะปกปิดนามสกุล เช่น "อภิสิทธิ์ จ.") — เปิดเฉพาะงานที่มั่นใจว่าลูกค้ายินยอม</span>
         </label>
-      </div>
+      </div>`}
     </div>` : "";
 
-  const warrantyDisplay = (!isAdmin && wi) ? `
+  const warrantyDisplay = (!isAdmin && wi && !isCleaningJob) ? `
     <div class="bg-emerald-50 rounded-xl p-4 mb-5">
       <div class="flex justify-between text-sm mb-2"><span class="font-semibold text-emerald-700">🛡️ อยู่ในระยะรับประกัน</span><span class="text-emerald-600 font-medium">${wi.remYears.toFixed(1)} ปีที่เหลือ</span></div>
       <div>${warrantyBarHTML(wi.pct)}</div>
@@ -1845,7 +1922,7 @@ function renderJobDetail(job, photos, slips, comments, claims){
       </div>
     </div>`;
 
-  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + confirmBlock + adminStatusBlock + warrantyDisplay + claimsBlock + photosBlock + slipsBlock + commentsBlock;
+  document.getElementById("jobModalBody").innerHTML = infoBlock + servicesBlock + stepperBlock + confirmBlock + appointmentDisplay + adminStatusBlock + warrantyDisplay + claimsBlock + photosBlock + slipsBlock + commentsBlock;
 }
 
 async function refreshJobDetail(){
@@ -1877,6 +1954,17 @@ async function saveWarranty(){
   const years = Number(document.getElementById("warrantyYearsInput").value);
   const updated = await db.updateJob(activeJob.id, { warranty_start:start, warranty_years:years });
   if(updated){ activeJob=updated; syncJobInCache(updated); toast("บันทึกการรับประกันแล้ว","ok"); await refreshJobDetail(); }
+}
+async function saveAppointment(){
+  const date = document.getElementById("appointmentDateInput").value;
+  if(!date){ toast("เลือกวันนัดก่อน","err"); return; }
+  const updated = await db.updateJob(activeJob.id, { appointment_date: date });
+  if(updated){
+    activeJob = updated; syncJobInCache(updated);
+    await db.addComment({ id:pid(), job_id:activeJob.id, author_email:currentUser.email, author_name:currentUser.name, is_admin:true, message:`📅 นัดเข้าหน้างานวันที่ ${thDate(date)}` });
+    toast("บันทึกวันนัดแล้ว","ok");
+    await refreshJobDetail();
+  }
 }
 async function togglePublicShowcase(checked){
   const updated = await db.updateJob(activeJob.id, { is_public_showcase: checked });
@@ -2135,6 +2223,7 @@ function renderClaimDetail(claim, photos, comments){
       <div class="text-xs text-ink-400">${esc(claim.customer_name||claim.customer_email)} · ${thDate(claim.created_at?claim.created_at.slice(0,10):null)}</div>
       <span class="badge ${cs.soft} ring-1">${esc(cs.label)}</span>
     </div>
+    <div class="mb-4">${renderClaimStepper(claim.status)}</div>
     <p class="text-sm text-ink-700 bg-ink-50 rounded-xl p-3 mb-4 leading-relaxed">${esc(claim.description)}</p>
     ${isAdmin ? `
     <label class="text-xs text-ink-500 font-medium">เปลี่ยนสถานะเคส</label>
